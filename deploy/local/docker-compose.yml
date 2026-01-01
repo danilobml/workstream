@@ -1,0 +1,130 @@
+services:
+
+  # Persistence and communication:
+  postgres:
+    image: postgres:alpine
+    environment:
+      POSTGRES_DB: workstream
+      POSTGRES_PASSWORD: workstream
+      POSTGRES_USER: workstream
+    ports:
+      - "5435:5432"
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - workstream
+
+  redis:
+    image: redis:latest
+    command: redis-server
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    networks:
+      - workstream
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+    networks:
+      - workstream
+    depends_on:
+      - redis
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - workstream
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: unless-stopped
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq/
+    networks:
+      - workstream
+
+  # Microservices:
+  workstream-tasks:
+    build:
+      context: .
+      dockerfile: ./deploy/local/Dockerfile.tasks
+    environment:
+      TASKS_HTTP_PORT: ${TASKS_HTTP_PORT}
+      TASKS_HTTP_HOST_PORT: ${TASKS_HTTP_HOST_PORT}
+      TASKS_GRPC_PORT: ${TASKS_GRPC_PORT}
+      TASKS_GRPC_HOST_PORT: ${TASKS_GRPC_HOST_PORT}
+      TASKS_GRPC_ADDR: ${TASKS_GRPC_ADDR}
+      POSTGRES_DSN: ${POSTGRES_DSN}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+    ports:
+      - "${TASKS_HTTP_HOST_PORT}:${TASKS_HTTP_PORT}"
+      - "${TASKS_GRPC_HOST_PORT}:${TASKS_GRPC_PORT}"
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - workstream
+
+  workstream-notifications:
+    build:
+      context: .
+      dockerfile: ./deploy/local/Dockerfile.notifications
+    environment:
+      NOTIFICATIONS_HTTP_PORT: ${NOTIFICATIONS_HTTP_PORT}
+      NOTIFICATIONS_HTTP_HOST_PORT: ${NOTIFICATIONS_HTTP_HOST_PORT}
+      MONGODB_URI: ${MONGODB_URI}
+      REDIS_ADDR: ${REDIS_ADDR}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+    ports:
+      - "${NOTIFICATIONS_HTTP_HOST_PORT}:${NOTIFICATIONS_HTTP_PORT}"
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq
+      - mongo
+      - redis
+    networks:
+      - workstream
+
+  workstream-gateway:
+    build:
+      context: .
+      dockerfile: ./deploy/local/Dockerfile.gateway
+    environment:
+      GATEWAY_HTTP_PORT: ${GATEWAY_HTTP_PORT}
+      GATEWAY_HTTP_HOST_PORT: ${GATEWAY_HTTP_HOST_PORT}
+      TASKS_GRPC_ADDR: ${TASKS_GRPC_ADDR}
+    ports:
+      - "${GATEWAY_HTTP_HOST_PORT}:${GATEWAY_HTTP_PORT}"
+    restart: unless-stopped
+    depends_on:
+      - workstream-tasks
+    networks:
+      - workstream
+
+volumes:
+  postgres-data:
+  redis-data:
+  mongo-data:
+  rabbitmq-data:
+
+networks:
+  workstream:
+    driver: bridge

@@ -1,0 +1,115 @@
+####################################
+# Go build artifacts
+####################################
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binaries
+*.test
+
+# Coverage / profiling
+*.out
+*.cover
+*.prof
+coverage/
+cover.out
+
+# Go workspace
+go.work
+go.work.sum
+
+####################################
+# Go module cache (should not be committed)
+####################################
+# Usually lives outside repo, but ignore defensively
+/pkg/mod/
+/pkg/sumdb/
+
+####################################
+# OS / editor files
+####################################
+.DS_Store
+.DS_Store?
+Thumbs.db
+
+####################################
+# IDEs / editors
+####################################
+.idea/
+.vscode/
+*.swp
+*.swo
+*.tmp
+
+####################################
+# Environment / secrets
+####################################
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+*.crt
+
+####################################
+# Logs
+####################################
+logs/
+*.log
+
+####################################
+# Docker
+####################################
+# Local overrides only
+docker-compose.override.yml
+
+# Build cache / temp
+.docker/
+
+####################################
+# Kubernetes
+####################################
+# Generated or local manifests
+k8s/generated/
+k8s/tmp/
+
+####################################
+# Terraform / IaC
+####################################
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+terraform.tfvars.json
+
+####################################
+# Local development
+####################################
+tmp/
+tmp/*
+bin/
+dist/
+
+####################################
+# Test artifacts
+####################################
+test-results/
+junit.xml
+
+####################################
+# Vendor (only if you don't commit it)
+####################################
+# Uncomment if vendor/ is NOT committed
+# vendor/
+
+####################################
+# Misc
+####################################
+*.local
+*.bak
+*.old

@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package workstream.tasks.v1;
+
+// NOTE: task_id is a UUID
+
+service TasksService {
+    rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse);
+    rpc GetTask(GetTaskRequest) returns (GetTaskResponse);
+    rpc ListTasks(ListTasksRequest) returns (ListTasksResponse);
+    rpc CompleteTask(CompleteTaskRequest) returns (CompleteTaskResponse);
+}
+
+message CreateTaskRequest {}
+message CreateTaskResponse {}
+
+message GetTaskRequest { 
+    string task_id = 1;
+}
+message GetTaskResponse {}
+
+message ListTasksRequest {}
+message ListTasksResponse {}
+
+message CompleteTaskRequest {
+    string task_id = 1;
+}
+message CompleteTaskResponse {}
