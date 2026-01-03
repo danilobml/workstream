@@ -10,7 +10,7 @@ import (
 	"github.com/danilobml/workstream/internal/platform/routes"
 )
 
-func StartServer(serviceName, portName string, registerServiceRoutes func(*http.ServeMux)) error {
+func StartServer(serviceName, portName string, registerServiceRoutes func(*http.ServeMux), isReady func() error) error {
 	port := os.Getenv(portName)
 	if port == "" {
 		msg := fmt.Sprintf("%s: %s variable could not be retrieved from env", serviceName, portName)
@@ -20,7 +20,7 @@ func StartServer(serviceName, portName string, registerServiceRoutes func(*http.
 	addr := fmt.Sprintf(":%s", port)
 
 	mux := http.NewServeMux()
-	routes.RegisterHealthRoutes(mux, serviceName)
+	routes.RegisterHealthRoutes(mux, serviceName, isReady)
 
 	if registerServiceRoutes != nil {
 		registerServiceRoutes(mux)

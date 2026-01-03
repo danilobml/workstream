@@ -4,7 +4,8 @@ import (
 	"log"
 
 	http "github.com/danilobml/workstream/internal/platform/httpserver"
-	gatewayroutes "github.com/danilobml/workstream/internal/workstream-gateway/routes"
+	"github.com/danilobml/workstream/internal/workstream-gateway/routes"
+	"github.com/danilobml/workstream/internal/workstream-gateway/readiness"
 )
 
 const (
@@ -13,9 +14,12 @@ const (
 )
 
 func main() {
-	registerRoutesFn := gatewayroutes.RegisterGatewayServiceRoutes
-
-	if err := http.StartServer(serviceName, portName, registerRoutesFn); err != nil {
+	if err := http.StartServer(
+		serviceName,
+		portName,
+		routes.RegisterGatewayServiceRoutes,
+		readiness.IsReady,
+		); err != nil {
 		log.Fatal(err)
 	}
 }

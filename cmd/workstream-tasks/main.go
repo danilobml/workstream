@@ -4,6 +4,7 @@ import (
 	"log"
 
 	http "github.com/danilobml/workstream/internal/platform/httpserver"
+	"github.com/danilobml/workstream/internal/workstream-tasks/readiness"
 )
 
 const (
@@ -12,7 +13,12 @@ const (
 )
 
 func main() {
-	if err := http.StartServer(serviceName, portName, nil); err != nil {
+	if err := http.StartServer(
+		serviceName,
+		portName,
+		nil,
+		readiness.IsReady,
+	); err != nil {
 		log.Fatal(err)
 	}
 }
