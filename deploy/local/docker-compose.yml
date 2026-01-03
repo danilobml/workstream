@@ -1,5 +1,4 @@
 services:
-
   # Persistence and communication:
   postgres:
     image: postgres:alpine
@@ -63,7 +62,7 @@ services:
   # Microservices:
   workstream-tasks:
     build:
-      context: .
+      context: ../..
       dockerfile: ./deploy/local/Dockerfile.tasks
     environment:
       TASKS_HTTP_PORT: ${TASKS_HTTP_PORT}
@@ -85,7 +84,7 @@ services:
 
   workstream-notifications:
     build:
-      context: .
+      context: ../..
       dockerfile: ./deploy/local/Dockerfile.notifications
     environment:
       NOTIFICATIONS_HTTP_PORT: ${NOTIFICATIONS_HTTP_PORT}
@@ -105,7 +104,7 @@ services:
 
   workstream-gateway:
     build:
-      context: .
+      context: ../..
       dockerfile: ./deploy/local/Dockerfile.gateway
     environment:
       GATEWAY_HTTP_PORT: ${GATEWAY_HTTP_PORT}
