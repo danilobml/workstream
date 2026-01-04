@@ -3,14 +3,20 @@ package readiness
 import (
 	"errors"
 	"os"
+
+	"github.com/danilobml/workstream/internal/workstream-gateway/grpc"
 )
 
 func IsReady() error {
 	grpcAddr := os.Getenv("TASKS_GRPC_ADDR")
-
 	if grpcAddr == "" {
-		return errors.New("gRPC server can't be initialized: TASKS_GRPC_ADDR variable could not be read from environment.")
+		return errors.New("missing TASKS_GRPC_ADDR")
 	}
 
-	return nil
+	conn, err := grpc.GetClient()
+	if err != nil {
+		return err
+	}
+
+	return grpc.CheckTasksHealth(conn)
 }

@@ -10,10 +10,10 @@ import (
 	"github.com/danilobml/workstream/internal/platform/routes"
 )
 
-func StartServer(serviceName, portName string, registerServiceRoutes func(*http.ServeMux), isReady func() error) error {
-	port := os.Getenv(portName)
+func StartServer(serviceName, httpPortName string, registerServiceRoutes func(*http.ServeMux), isReady func() error) error {
+	port := os.Getenv(httpPortName)
 	if port == "" {
-		msg := fmt.Sprintf("%s: %s variable could not be retrieved from env", serviceName, portName)
+		msg := fmt.Sprintf("%s: %s variable could not be retrieved from env", serviceName, httpPortName)
 		return errors.New(msg)
 	}
 

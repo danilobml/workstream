@@ -2,24 +2,34 @@ package main
 
 import (
 	"log"
+	"os"
 
 	http "github.com/danilobml/workstream/internal/platform/httpserver"
-	"github.com/danilobml/workstream/internal/workstream-gateway/routes"
+	"github.com/danilobml/workstream/internal/workstream-gateway/grpc"
 	"github.com/danilobml/workstream/internal/workstream-gateway/readiness"
+	"github.com/danilobml/workstream/internal/workstream-gateway/routes"
 )
 
 const (
-	serviceName = "workstream-gateway"
-	portName    = "GATEWAY_HTTP_PORT"
+	serviceName  = "workstream-gateway"
+	httpPortName = "GATEWAY_HTTP_PORT"
+	grpcAddrName = "TASKS_GRPC_ADDR"
 )
 
 func main() {
+	grpcAddr := os.Getenv(grpcAddrName)
+	conn, err := grpc.CreateGrpcClient(grpcAddr)
+	grpc.SetClient(conn, err)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	if err := http.StartServer(
 		serviceName,
-		portName,
+		httpPortName,
 		routes.RegisterGatewayServiceRoutes,
 		readiness.IsReady,
-		); err != nil {
+	); err != nil {
 		log.Fatal(err)
 	}
 }
