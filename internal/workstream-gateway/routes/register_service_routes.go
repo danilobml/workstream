@@ -11,5 +11,6 @@ func RegisterGatewayServiceRoutes(handler *handlers.GatewayHandler) func(mux *ht
 		mux.HandleFunc("POST /tasks", handler.CreateNewTask)
 		mux.HandleFunc("GET /tasks", handler.GetTasks)
 		mux.HandleFunc("GET /tasks/{id}", handler.GetTask)
+		mux.HandleFunc("POST /tasks/{id}/complete", handler.CompleteTask)
 	}
 }

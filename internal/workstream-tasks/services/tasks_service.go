@@ -36,7 +36,7 @@ func (ts *TasksService) CreateTask(ctx context.Context, r *pb.CreateTaskRequest)
 
 func (ts *TasksService) GetTask(ctx context.Context, r *pb.GetTaskRequest) (*pb.GetTaskResponse, error) {
 	if r.TaskId == "" {
-		return nil, status.Error(codes.InvalidArgument, "CreateTask - required parameter TaskId is missing")
+		return nil, status.Error(codes.InvalidArgument, "required parameter TaskId is missing")
 	}
 
 	if r.TaskId != "1" {
@@ -79,4 +79,17 @@ func (ts *TasksService) ListTasks(ctx context.Context, r *pb.ListTasksRequest) (
 	}
 
 	return resp, nil
+}
+
+func (ts *TasksService) CompleteTask(ctx context.Context, r *pb.CompleteTaskRequest) (*pb.CompleteTaskResponse, error) {
+	if r.TaskId == "" {
+		return nil, status.Error(codes.InvalidArgument, "required parameter TaskId is missing")
+	}
+
+	if r.TaskId != "1" {
+		return nil, status.Error(codes.NotFound, "not found")
+	}
+	// TODO - implement update logic
+
+	return &pb.CompleteTaskResponse{}, nil
 }

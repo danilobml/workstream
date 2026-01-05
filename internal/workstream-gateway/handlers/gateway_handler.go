@@ -18,6 +18,7 @@ type IGatewayHandler interface {
 	CreateNewTask(w http.ResponseWriter, r *http.Request)
 	GetTask(w http.ResponseWriter, r *http.Request)
 	GetTasks(w http.ResponseWriter, r *http.Request)
+	CompleteTask(w http.ResponseWriter, r *http.Request)
 }
 
 type GatewayHandler struct {
@@ -66,7 +67,7 @@ func (gh *GatewayHandler) GetTask(w http.ResponseWriter, r *http.Request) {
 
 	id := r.PathValue("id")
 	if id == "" {
-		http.Error(w, "error: id missing in path", http.StatusNotFound)
+		http.Error(w, "error: id missing in path", http.StatusBadRequest)
 		return
 	}
 
@@ -106,13 +107,39 @@ func (gh *GatewayHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 
 	for _, task := range tasks {
 		resp = append(resp, dtos.SingleTaskResponse{
-			Id: task.Id,
-			Title: task.Title,
+			Id:        task.Id,
+			Title:     task.Title,
 			Completed: task.Completed,
 		})
 	}
 
 	err = httputils.WriteJson(w, http.StatusOK, resp)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func (gh *GatewayHandler) CompleteTask(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	id := r.PathValue("id")
+	if id == "" {
+		http.Error(w, "error: id missing in path", http.StatusBadRequest)
+		return
+	}
+
+	err := gh.tasksService.CompleteTask(ctx, id)
+	if err != nil {
+		if errors.Is(err, errs.ErrNotFound) {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = httputils.WriteJson(w, http.StatusOK, "Task successfully completed")
 	if err != nil {
 		log.Println(err)
 	}

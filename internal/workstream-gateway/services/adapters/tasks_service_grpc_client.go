@@ -63,3 +63,12 @@ func (c *Client) ListTasks(ctx context.Context) ([]*models.Task, error) {
 
 	return tasks, nil
 }
+
+func (c *Client) CompleteTask(ctx context.Context, id string) error {
+	_, err := c.pb.CompleteTask(ctx, &pb.CompleteTaskRequest{TaskId: id})
+	if err != nil {
+		return grpcutils.ParseGrpcError(err)
+	}
+
+	return nil
+}
