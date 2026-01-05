@@ -29,10 +29,14 @@ message CreateTaskResponse {
 message GetTaskRequest { 
     string task_id = 1;
 }
-message GetTaskResponse {}
+message GetTaskResponse {
+    Task task =1;
+}
 
 message ListTasksRequest {}
-message ListTasksResponse {}
+message ListTasksResponse {
+    repeated Task tasks = 1;
+}
 
 message CompleteTaskRequest {
     string task_id = 1;

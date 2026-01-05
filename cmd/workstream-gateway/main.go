@@ -9,6 +9,7 @@ import (
 	"github.com/danilobml/workstream/internal/workstream-gateway/handlers"
 	"github.com/danilobml/workstream/internal/workstream-gateway/readiness"
 	"github.com/danilobml/workstream/internal/workstream-gateway/routes"
+	services "github.com/danilobml/workstream/internal/workstream-gateway/services/adapters"
 )
 
 const (
@@ -26,7 +27,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	gatewayHandler := handlers.NewGatewayHandler(conn)
+	service := services.NewTasksServiceClient(conn)
+	gatewayHandler := handlers.NewGatewayHandler(service)
 
 	if err := http.StartServer(
 		serviceName,

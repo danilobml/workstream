@@ -6,10 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	pb "github.com/danilobml/workstream/internal/gen/tasks/v1"
 	"github.com/danilobml/workstream/internal/platform/httputils"
 	"github.com/danilobml/workstream/internal/workstream-gateway/dtos"
-	"google.golang.org/grpc"
+	services "github.com/danilobml/workstream/internal/workstream-gateway/services/ports"
 )
 
 type IGatewayHandler interface {
@@ -17,12 +16,12 @@ type IGatewayHandler interface {
 }
 
 type GatewayHandler struct {
-	tasksService pb.TasksServiceClient
+	tasksService services.TasksServicePort
 }
 
-func NewGatewayHandler(conn grpc.ClientConnInterface) *GatewayHandler {
+func NewGatewayHandler(tasksService services.TasksServicePort) *GatewayHandler {
 	return &GatewayHandler{
-		tasksService: pb.NewTasksServiceClient(conn),
+		tasksService: tasksService,
 	}
 }
 
@@ -38,17 +37,16 @@ func (gh *GatewayHandler) CreateNewTask(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	tsResp, err := gh.tasksService.CreateTask(ctx, &pb.CreateTaskRequest{Title: request.Title})
+	tsResp, err := gh.tasksService.CreateTask(ctx, request.Title)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	newTask := tsResp.GetTask()
 
 	resp := dtos.CreateTaskResponse{
-		Id: newTask.TaskId,
-		Title: newTask.Title,
-		Completed: newTask.Completed,
+		Id: tsResp.Id,
+		Title: tsResp.Title,
+		Completed: tsResp.Completed,
 	}
 
 	err = httputils.WriteJson(w, http.StatusCreated, resp)

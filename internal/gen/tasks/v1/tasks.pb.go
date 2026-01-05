@@ -215,6 +215,7 @@ func (x *GetTaskRequest) GetTaskId() string {
 
 type GetTaskResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Task          *Task                  `protobuf:"bytes,1,opt,name=task,proto3" json:"task,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -247,6 +248,13 @@ func (x *GetTaskResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetTaskResponse.ProtoReflect.Descriptor instead.
 func (*GetTaskResponse) Descriptor() ([]byte, []int) {
 	return file_tasks_v1_tasks_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *GetTaskResponse) GetTask() *Task {
+	if x != nil {
+		return x.Task
+	}
+	return nil
 }
 
 type ListTasksRequest struct {
@@ -287,6 +295,7 @@ func (*ListTasksRequest) Descriptor() ([]byte, []int) {
 
 type ListTasksResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tasks         []*Task                `protobuf:"bytes,1,rep,name=tasks,proto3" json:"tasks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -319,6 +328,13 @@ func (x *ListTasksResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ListTasksResponse.ProtoReflect.Descriptor instead.
 func (*ListTasksResponse) Descriptor() ([]byte, []int) {
 	return file_tasks_v1_tasks_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ListTasksResponse) GetTasks() []*Task {
+	if x != nil {
+		return x.Tasks
+	}
+	return nil
 }
 
 type CompleteTaskRequest struct {
@@ -415,10 +431,12 @@ const file_tasks_v1_tasks_proto_rawDesc = "" +
 	"\x12CreateTaskResponse\x12-\n" +
 	"\x04task\x18\x01 \x01(\v2\x19.workstream.tasks.v1.TaskR\x04task\")\n" +
 	"\x0eGetTaskRequest\x12\x17\n" +
-	"\atask_id\x18\x01 \x01(\tR\x06taskId\"\x11\n" +
-	"\x0fGetTaskResponse\"\x12\n" +
-	"\x10ListTasksRequest\"\x13\n" +
-	"\x11ListTasksResponse\".\n" +
+	"\atask_id\x18\x01 \x01(\tR\x06taskId\"@\n" +
+	"\x0fGetTaskResponse\x12-\n" +
+	"\x04task\x18\x01 \x01(\v2\x19.workstream.tasks.v1.TaskR\x04task\"\x12\n" +
+	"\x10ListTasksRequest\"D\n" +
+	"\x11ListTasksResponse\x12/\n" +
+	"\x05tasks\x18\x01 \x03(\v2\x19.workstream.tasks.v1.TaskR\x05tasks\".\n" +
 	"\x13CompleteTaskRequest\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\tR\x06taskId\"\x16\n" +
 	"\x14CompleteTaskResponse2\x84\x03\n" +
@@ -455,19 +473,21 @@ var file_tasks_v1_tasks_proto_goTypes = []any{
 }
 var file_tasks_v1_tasks_proto_depIdxs = []int32{
 	0, // 0: workstream.tasks.v1.CreateTaskResponse.task:type_name -> workstream.tasks.v1.Task
-	1, // 1: workstream.tasks.v1.TasksService.CreateTask:input_type -> workstream.tasks.v1.CreateTaskRequest
-	3, // 2: workstream.tasks.v1.TasksService.GetTask:input_type -> workstream.tasks.v1.GetTaskRequest
-	5, // 3: workstream.tasks.v1.TasksService.ListTasks:input_type -> workstream.tasks.v1.ListTasksRequest
-	7, // 4: workstream.tasks.v1.TasksService.CompleteTask:input_type -> workstream.tasks.v1.CompleteTaskRequest
-	2, // 5: workstream.tasks.v1.TasksService.CreateTask:output_type -> workstream.tasks.v1.CreateTaskResponse
-	4, // 6: workstream.tasks.v1.TasksService.GetTask:output_type -> workstream.tasks.v1.GetTaskResponse
-	6, // 7: workstream.tasks.v1.TasksService.ListTasks:output_type -> workstream.tasks.v1.ListTasksResponse
-	8, // 8: workstream.tasks.v1.TasksService.CompleteTask:output_type -> workstream.tasks.v1.CompleteTaskResponse
-	5, // [5:9] is the sub-list for method output_type
-	1, // [1:5] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	0, // 1: workstream.tasks.v1.GetTaskResponse.task:type_name -> workstream.tasks.v1.Task
+	0, // 2: workstream.tasks.v1.ListTasksResponse.tasks:type_name -> workstream.tasks.v1.Task
+	1, // 3: workstream.tasks.v1.TasksService.CreateTask:input_type -> workstream.tasks.v1.CreateTaskRequest
+	3, // 4: workstream.tasks.v1.TasksService.GetTask:input_type -> workstream.tasks.v1.GetTaskRequest
+	5, // 5: workstream.tasks.v1.TasksService.ListTasks:input_type -> workstream.tasks.v1.ListTasksRequest
+	7, // 6: workstream.tasks.v1.TasksService.CompleteTask:input_type -> workstream.tasks.v1.CompleteTaskRequest
+	2, // 7: workstream.tasks.v1.TasksService.CreateTask:output_type -> workstream.tasks.v1.CreateTaskResponse
+	4, // 8: workstream.tasks.v1.TasksService.GetTask:output_type -> workstream.tasks.v1.GetTaskResponse
+	6, // 9: workstream.tasks.v1.TasksService.ListTasks:output_type -> workstream.tasks.v1.ListTasksResponse
+	8, // 10: workstream.tasks.v1.TasksService.CompleteTask:output_type -> workstream.tasks.v1.CompleteTaskResponse
+	7, // [7:11] is the sub-list for method output_type
+	3, // [3:7] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_tasks_v1_tasks_proto_init() }
