@@ -9,5 +9,6 @@ import (
 func RegisterGatewayServiceRoutes(handler *handlers.GatewayHandler) func(mux *http.ServeMux) {
 	return func(mux *http.ServeMux) {
 		mux.HandleFunc("POST /tasks", handler.CreateNewTask)
+		mux.HandleFunc("GET /tasks/{id}", handler.GetTask)
 	}
 }

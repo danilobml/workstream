@@ -3,9 +3,12 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"log"
 	"net/http"
 	"time"
 
+	"github.com/danilobml/workstream/internal/platform/errs"
 	"github.com/danilobml/workstream/internal/platform/httputils"
 	"github.com/danilobml/workstream/internal/workstream-gateway/dtos"
 	services "github.com/danilobml/workstream/internal/workstream-gateway/services/ports"
@@ -13,6 +16,7 @@ import (
 
 type IGatewayHandler interface {
 	CreateNewTask(w http.ResponseWriter, r *http.Request)
+	GetTask(w http.ResponseWriter, r *http.Request)
 }
 
 type GatewayHandler struct {
@@ -44,13 +48,45 @@ func (gh *GatewayHandler) CreateNewTask(w http.ResponseWriter, r *http.Request) 
 	}
 
 	resp := dtos.CreateTaskResponse{
-		Id: tsResp.Id,
-		Title: tsResp.Title,
+		Id:        tsResp.Id,
+		Title:     tsResp.Title,
 		Completed: tsResp.Completed,
 	}
 
 	err = httputils.WriteJson(w, http.StatusCreated, resp)
 	if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-    }
+		log.Println(err)
+	}
+}
+
+func (gh *GatewayHandler) GetTask(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	id := r.PathValue("id")
+	if id == "" {
+		http.Error(w, "error: id missing in path", http.StatusNotFound)
+		return
+	}
+
+	task, err := gh.tasksService.GetTask(ctx, id)
+	if err != nil {
+		if errors.Is(err, errs.ErrNotFound) {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	resp := &dtos.GetTaskResponse{
+		Id:        task.Id,
+		Title:     task.Title,
+		Completed: task.Completed,
+	}
+
+	err = httputils.WriteJson(w, http.StatusOK, resp)
+	if err != nil {
+		log.Println(err)
+	}
 }

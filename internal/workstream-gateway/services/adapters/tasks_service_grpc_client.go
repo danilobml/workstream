@@ -2,9 +2,9 @@ package adapters
 
 import (
 	"context"
-	"fmt"
 
 	pb "github.com/danilobml/workstream/internal/gen/tasks/v1"
+	"github.com/danilobml/workstream/internal/platform/grpcutils"
 	"github.com/danilobml/workstream/internal/workstream-gateway/models"
 	"google.golang.org/grpc"
 )
@@ -20,7 +20,21 @@ func NewTasksServiceClient(conn grpc.ClientConnInterface) *Client {
 func (c *Client) CreateTask(ctx context.Context, title string) (*models.Task, error) {
 	resp, err := c.pb.CreateTask(ctx, &pb.CreateTaskRequest{Title: title})
 	if err != nil {
-		return nil, fmt.Errorf("tasks grpc CreateTask: %w", err)
+		return nil, grpcutils.ParseGrpcError(err)
+	}
+
+	t := resp.GetTask()
+	return &models.Task{
+		Id:        t.GetTaskId(),
+		Title:     t.GetTitle(),
+		Completed: t.GetCompleted(),
+	}, nil
+}
+
+func (c *Client) GetTask(ctx context.Context, id string) (*models.Task, error) {
+	resp, err := c.pb.GetTask(ctx, &pb.GetTaskRequest{TaskId: id})
+	if err != nil {
+		return nil, grpcutils.ParseGrpcError(err)
 	}
 
 	t := resp.GetTask()

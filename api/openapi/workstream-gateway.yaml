@@ -31,6 +31,15 @@ paths:
         "201":
           description: Task successfully created
 
+  /tasks/{id}:
+    get:
+      operationId: getTask
+      summary: Returns an existing task
+      tags: [tasks]
+      responses:
+        "200":
+          description: A task
+
   /tasks/{id}/complete:
     post:
       operationId: completeTask
