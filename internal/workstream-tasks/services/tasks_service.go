@@ -55,3 +55,28 @@ func (ts *TasksService) GetTask(ctx context.Context, r *pb.GetTaskRequest) (*pb.
 		Task: foundTask,
 	}, nil
 }
+
+func (ts *TasksService) ListTasks(ctx context.Context, r *pb.ListTasksRequest) (*pb.ListTasksResponse, error) {
+	// TODO - implement fetching logic
+	resp := &pb.ListTasksResponse{
+		Tasks: []*pb.Task{
+			{
+				TaskId:    "1",
+				Title:     "Test task 1",
+				Completed: false,
+			},
+			{
+				TaskId:    "2",
+				Title:     "Test task 2",
+				Completed: true,
+			},
+			{
+				TaskId:    "3",
+				Title:     "Test task 3",
+				Completed: false,
+			},
+		},
+	}
+
+	return resp, nil
+}

@@ -17,6 +17,7 @@ import (
 type IGatewayHandler interface {
 	CreateNewTask(w http.ResponseWriter, r *http.Request)
 	GetTask(w http.ResponseWriter, r *http.Request)
+	GetTasks(w http.ResponseWriter, r *http.Request)
 }
 
 type GatewayHandler struct {
@@ -47,7 +48,7 @@ func (gh *GatewayHandler) CreateNewTask(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	resp := dtos.CreateTaskResponse{
+	resp := dtos.SingleTaskResponse{
 		Id:        tsResp.Id,
 		Title:     tsResp.Title,
 		Completed: tsResp.Completed,
@@ -79,10 +80,36 @@ func (gh *GatewayHandler) GetTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := &dtos.GetTaskResponse{
+	resp := &dtos.SingleTaskResponse{
 		Id:        task.Id,
 		Title:     task.Title,
 		Completed: task.Completed,
+	}
+
+	err = httputils.WriteJson(w, http.StatusOK, resp)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func (gh *GatewayHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	tasks, err := gh.tasksService.ListTasks(ctx)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var resp dtos.ListTasksResponse
+
+	for _, task := range tasks {
+		resp = append(resp, dtos.SingleTaskResponse{
+			Id: task.Id,
+			Title: task.Title,
+			Completed: task.Completed,
+		})
 	}
 
 	err = httputils.WriteJson(w, http.StatusOK, resp)

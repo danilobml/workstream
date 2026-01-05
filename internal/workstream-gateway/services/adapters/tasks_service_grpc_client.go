@@ -44,3 +44,22 @@ func (c *Client) GetTask(ctx context.Context, id string) (*models.Task, error) {
 		Completed: t.GetCompleted(),
 	}, nil
 }
+
+func (c *Client) ListTasks(ctx context.Context) ([]*models.Task, error) {
+	resp, err := c.pb.ListTasks(ctx, &pb.ListTasksRequest{})
+	if err != nil {
+		return nil, grpcutils.ParseGrpcError(err)
+	}
+
+	var tasks []*models.Task
+
+	for _, task := range resp.GetTasks() {
+		tasks = append(tasks, &models.Task{
+			Id: task.GetTaskId(),
+			Title: task.GetTitle(),
+			Completed: task.GetCompleted(),
+		})
+	}
+
+	return tasks, nil
+}
