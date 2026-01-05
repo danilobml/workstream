@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package workstream.tasks.v1;
 
+option go_package = "github.com/danilobml/workstream/internal/gen/tasks/v1";
+
 // NOTE: task_id is a UUID
 
 service TasksService {
@@ -11,8 +13,18 @@ service TasksService {
     rpc CompleteTask(CompleteTaskRequest) returns (CompleteTaskResponse);
 }
 
-message CreateTaskRequest {}
-message CreateTaskResponse {}
+message Task {
+    string task_id = 1;
+    string title = 2;
+    bool completed = 3; 
+}
+
+message CreateTaskRequest {
+    string title = 1;
+}
+message CreateTaskResponse {
+    Task task = 1;
+}
 
 message GetTaskRequest { 
     string task_id = 1;

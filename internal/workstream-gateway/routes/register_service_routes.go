@@ -1,14 +1,13 @@
 package routes
 
 import (
-	"fmt"
 	"net/http"
+
+	"github.com/danilobml/workstream/internal/workstream-gateway/handlers"
 )
 
-func RegisterGatewayServiceRoutes(mux *http.ServeMux) {
-	// TODO - implement service routes
-
-	mux.HandleFunc("GET /test", func(w http.ResponseWriter, req *http.Request) {
-		fmt.Fprint(w, "Test gateway route")
-	})
+func RegisterGatewayServiceRoutes(handler *handlers.GatewayHandler) func(mux *http.ServeMux) {
+	return func(mux *http.ServeMux) {
+		mux.HandleFunc("POST /tasks", handler.CreateNewTask)
+	}
 }

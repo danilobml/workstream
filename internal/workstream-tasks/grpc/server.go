@@ -5,6 +5,8 @@ import (
 	"log"
 	"net"
 
+	pb "github.com/danilobml/workstream/internal/gen/tasks/v1"
+	"github.com/danilobml/workstream/internal/workstream-tasks/services"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	grpc_health_v1 "google.golang.org/grpc/health/grpc_health_v1"
@@ -24,6 +26,8 @@ func RegisterGrpcServer(listener net.Listener, errCh chan<- error) {
 
 	hs := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(s, hs)
+	ts := services.NewTasksService()
+	pb.RegisterTasksServiceServer(s, ts)
 
 	hs.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 

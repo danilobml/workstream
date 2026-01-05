@@ -6,6 +6,7 @@ import (
 
 	http "github.com/danilobml/workstream/internal/platform/httpserver"
 	"github.com/danilobml/workstream/internal/workstream-gateway/grpc"
+	"github.com/danilobml/workstream/internal/workstream-gateway/handlers"
 	"github.com/danilobml/workstream/internal/workstream-gateway/readiness"
 	"github.com/danilobml/workstream/internal/workstream-gateway/routes"
 )
@@ -18,16 +19,19 @@ const (
 
 func main() {
 	grpcAddr := os.Getenv(grpcAddrName)
+
 	conn, err := grpc.CreateGrpcClient(grpcAddr)
 	grpc.SetClient(conn, err)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	gatewayHandler := handlers.NewGatewayHandler(conn)
+
 	if err := http.StartServer(
 		serviceName,
 		httpPortName,
-		routes.RegisterGatewayServiceRoutes,
+		routes.RegisterGatewayServiceRoutes(gatewayHandler),
 		readiness.IsReady,
 	); err != nil {
 		log.Fatal(err)
