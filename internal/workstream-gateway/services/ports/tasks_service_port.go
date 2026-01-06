@@ -3,7 +3,7 @@ package ports
 import (
 	"context"
 	
-	"github.com/danilobml/workstream/internal/workstream-gateway/models"
+	"github.com/danilobml/workstream/internal/platform/models"
 )
 
 type TasksServicePort interface {

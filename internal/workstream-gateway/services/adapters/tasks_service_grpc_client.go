@@ -5,7 +5,7 @@ import (
 
 	pb "github.com/danilobml/workstream/internal/gen/tasks/v1"
 	"github.com/danilobml/workstream/internal/platform/grpcutils"
-	"github.com/danilobml/workstream/internal/workstream-gateway/models"
+	"github.com/danilobml/workstream/internal/platform/models"
 	"google.golang.org/grpc"
 )
 

@@ -1,7 +1,13 @@
+ifneq (,$(wildcard .env))
+include .env
+export
+endif
+
 COMPOSE_FILE=deploy/local/docker-compose.yml
 ENV_FILE=.env
+GOOSE_MIGRATION_DIR=./internal/workstream-tasks/migrations 
 
-.PHONY: run stop logs build rebuild rpcgen
+.PHONY: run stop logs build rebuild rpcgen goose_up goose_down
 
 run:
 	docker compose \
@@ -41,3 +47,11 @@ rpcgen:
 		--go-grpc_out=internal/gen \
 		--go-grpc_opt=paths=source_relative \
 		api/proto/tasks/v1/tasks.proto
+
+goose_up:
+	@GOOSE_DRIVER=postgres GOOSE_DBSTRING=$(POSTGRES_DSN) \
+	goose -dir=$(GOOSE_MIGRATION_DIR) up
+
+goose_down:
+	@GOOSE_DRIVER=postgres GOOSE_DBSTRING=$(POSTGRES_DSN) \
+	goose -dir=$(GOOSE_MIGRATION_DIR) down

@@ -13,6 +13,11 @@ services:
       - postgres-data:/var/lib/postgresql/data
     networks:
       - workstream
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U workstream -d workstream"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
 
   redis:
     image: redis:latest
@@ -58,6 +63,19 @@ services:
       - rabbitmq-data:/var/lib/rabbitmq/
     networks:
       - workstream
+  goose:
+    image: ghcr.io/kukymbr/goose-docker:3.26.0
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - workstream
+    environment:
+      GOOSE_DRIVER: postgres
+      GOOSE_DBSTRING: ${POSTGRES_DSN}
+      GOOSE_COMMAND: up
+    volumes:
+      - ../../internal/workstream-tasks/db/migrations:/migrations:ro
 
   # Microservices:
   workstream-tasks:

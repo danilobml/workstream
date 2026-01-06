@@ -4,16 +4,22 @@ import (
 	"context"
 
 	pb "github.com/danilobml/workstream/internal/gen/tasks/v1"
+	"github.com/danilobml/workstream/internal/platform/models"
+	"github.com/danilobml/workstream/internal/workstream-tasks/repositories"
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type TasksService struct {
 	pb.UnimplementedTasksServiceServer
+	repo repositories.ITaskRepository
 }
 
-func NewTasksService() *TasksService {
-	return &TasksService{}
+func NewTasksService(repo repositories.ITaskRepository) *TasksService {
+	return &TasksService{
+		repo: repo,
+	}
 }
 
 func (ts *TasksService) CreateTask(ctx context.Context, r *pb.CreateTaskRequest) (*pb.CreateTaskResponse, error) {
@@ -21,12 +27,23 @@ func (ts *TasksService) CreateTask(ctx context.Context, r *pb.CreateTaskRequest)
 		return nil, status.Error(codes.InvalidArgument, "required parameter Title is missing")
 	}
 
-	// Dummy task for testing:
-	// TODO: implement fetching logic in repo:
-	newTask := &pb.Task{
-		TaskId:    "1",
-		Title:     r.Title,
+	id := uuid.New().String()
+
+	task := models.Task{
+		Id: id,
+		Title: r.Title,
 		Completed: false,
+	}
+
+	taskDb, err := ts.repo.Create(ctx, task)
+	if err != nil {
+		return nil, err
+	}
+
+	newTask := &pb.Task{
+		TaskId:    taskDb.Id,
+		Title:     taskDb.Title,
+		Completed: taskDb.Completed,
 	}
 
 	return &pb.CreateTaskResponse{
