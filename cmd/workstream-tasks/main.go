@@ -35,13 +35,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	dbConn, err := db.InitDB(postgresDsn)
+	dbConnPool, err := db.InitDB(postgresDsn)
 	if err != nil {
 		log.Fatal("workstream-tasks - failed to initialize database")
 	}
-	db := db.NewDB(dbConn)
+	defer dbConnPool.Close()
 
-	repo := repositories.NewPgTaskRepository(db)
+	repo := repositories.NewPgTaskRepository(dbConnPool)
 	tasksServer := services.NewTasksService(repo)
 
 	errCh := make(chan error, 1)

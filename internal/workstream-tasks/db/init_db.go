@@ -1,24 +1,27 @@
 package db
 
 import (
-    "context"
-    "fmt"
+	"context"
+	"fmt"
+	"time"
 
-    "github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-func InitDB(dsn string) (*pgx.Conn, error) {
+func InitDB(dsn string) (*pgxpool.Pool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-    db, err := pgx.Connect(context.Background(), dsn)
-    if err != nil {
-        return nil, err
-    }
+	pool, err := pgxpool.Connect(ctx, dsn)
+	if err != nil {
+		return nil, err
+	}
+    
+	if err := pool.Ping(ctx); err != nil {
+		pool.Close()
+		return nil, err
+	}
 
-    if err := db.Ping(context.Background()); err != nil {
-        db.Close(context.Background())
-        return nil, err
-    }
-	
-    fmt.Println("Connected to PostgreSQL database!")
-    return db, nil
+	fmt.Println("Connected to PostgreSQL database!")
+	return pool, nil
 }
