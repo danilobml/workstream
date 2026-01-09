@@ -21,7 +21,7 @@ func StartGrpcListener(grpcPort string) (net.Listener, error) {
 	return lis, err
 }
 
-func RegisterGrpcServer(tasksServer *services.TasksService, listener net.Listener, errCh chan<- error) {
+func RegisterGrpcServer(tasksServer *services.TasksService, listener net.Listener,  errCh chan<- error) {
 	s := grpc.NewServer()
 
 	hs := health.NewServer()

@@ -2,7 +2,9 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"time"
 
 	pb "github.com/danilobml/workstream/internal/gen/tasks/v1"
 	"github.com/danilobml/workstream/internal/platform/errs"
@@ -15,12 +17,14 @@ import (
 
 type TasksService struct {
 	pb.UnimplementedTasksServiceServer
-	repo repositories.ITaskRepository
+	repo          repositories.ITaskRepository
+	eventsService EventsService
 }
 
-func NewTasksService(repo repositories.ITaskRepository) *TasksService {
+func NewTasksService(repo repositories.ITaskRepository, eventsService EventsService) *TasksService {
 	return &TasksService{
 		repo: repo,
+		eventsService: eventsService,
 	}
 }
 
@@ -46,6 +50,25 @@ func (ts *TasksService) CreateTask(ctx context.Context, r *pb.CreateTaskRequest)
 		TaskId:    taskDb.Id,
 		Title:     taskDb.Title,
 		Completed: taskDb.Completed,
+	}
+
+	taskJson, err := json.Marshal(newTask)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to marshal new task for event")
+	}
+
+	event := models.Event{
+		EventID: uuid.NewString(),
+		EventType: "workstream.task.created.v1",
+		OccurredAt: time.Now(),
+		Producer: "workstream-tasks",
+		TraceID: uuid.NewString(),
+		Payload: taskJson,
+	}
+
+	err = ts.eventsService.Publish(ctx, event)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to send event")
 	}
 
 	return &pb.CreateTaskResponse{
