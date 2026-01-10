@@ -3,24 +3,28 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log"
 
+	"github.com/danilobml/workstream/internal/platform/errs"
 	"github.com/danilobml/workstream/internal/platform/models"
 	"github.com/danilobml/workstream/internal/platform/rabbitmq"
 )
 
 type EventConsumerService interface {
 	Consume()
-	ProcessEvent(event models.Event) error
+	ProcessEvent(ctx context.Context, event models.Event) error
 }
 
 type RabbitConsumerService struct {
-	client    *rabbitmq.RabbitMQ
+	client              *rabbitmq.RabbitMQ
+	notificationService NotificationService
 }
 
-func NewRabbitConsumerService(client *rabbitmq.RabbitMQ) *RabbitConsumerService {
+func NewRabbitConsumerService(client *rabbitmq.RabbitMQ, notificationService NotificationService) *RabbitConsumerService {
 	return &RabbitConsumerService{
-		client: client,
+		client:              client,
+		notificationService: notificationService,
 	}
 }
 
@@ -43,7 +47,15 @@ func (rs *RabbitConsumerService) Consume(ctx context.Context) error {
 			continue
 		}
 
-		if err := rs.ProcessEvent(event); err != nil {
+		err := rs.ProcessEvent(ctx, event)
+		if errors.Is(err, errs.ErrAlreadyProcessed) {
+			log.Printf("process failed (skip): %v", err)
+			if ackErr := d.Ack(false); ackErr != nil {
+				log.Printf("ack failed: %v", ackErr)
+			}
+			continue
+		}
+		if err != nil {
 			log.Printf("process failed (requeue): %v", err)
 			if nackErr := d.Nack(false, true); nackErr != nil {
 				log.Printf("nack failed: %v", nackErr)
@@ -59,10 +71,14 @@ func (rs *RabbitConsumerService) Consume(ctx context.Context) error {
 	return nil
 }
 
+func (rs *RabbitConsumerService) ProcessEvent(ctx context.Context, event models.Event) error {
 
-func (rs *RabbitConsumerService) ProcessEvent(event models.Event) error {
-	// TODO - implement functionality:
 	log.Printf("Received a message = %v\n", event)
+
+	err := rs.notificationService.CreateNewNotification(ctx, event)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

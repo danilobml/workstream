@@ -23,9 +23,15 @@ type TasksService struct {
 
 func NewTasksService(repo repositories.ITaskRepository, eventsService EventsService) *TasksService {
 	return &TasksService{
-		repo: repo,
+		repo:          repo,
 		eventsService: eventsService,
 	}
+}
+
+type TaskCreatedV1Payload struct {
+	TaskId    string `json:"task_id"`
+	Title     string `json:"title"`
+	Completed bool   `json:"completed"`
 }
 
 func (ts *TasksService) CreateTask(ctx context.Context, r *pb.CreateTaskRequest) (*pb.CreateTaskResponse, error) {
@@ -46,7 +52,7 @@ func (ts *TasksService) CreateTask(ctx context.Context, r *pb.CreateTaskRequest)
 		return nil, status.Error(codes.Internal, "failed to create task")
 	}
 
-	newTask := &pb.Task{
+	newTask := &TaskCreatedV1Payload{
 		TaskId:    taskDb.Id,
 		Title:     taskDb.Title,
 		Completed: taskDb.Completed,
@@ -58,12 +64,12 @@ func (ts *TasksService) CreateTask(ctx context.Context, r *pb.CreateTaskRequest)
 	}
 
 	event := models.Event{
-		EventID: uuid.NewString(),
-		EventType: "workstream.task.created.v1",
+		EventID:    uuid.NewString(),
+		EventType:  "workstream.task.created.v1",
 		OccurredAt: time.Now(),
-		Producer: "workstream-tasks",
-		TraceID: uuid.NewString(),
-		Payload: taskJson,
+		Producer:   "workstream-tasks",
+		TraceID:    uuid.NewString(),
+		Payload:    json.RawMessage(taskJson),
 	}
 
 	err = ts.eventsService.Publish(ctx, event)
@@ -72,7 +78,11 @@ func (ts *TasksService) CreateTask(ctx context.Context, r *pb.CreateTaskRequest)
 	}
 
 	return &pb.CreateTaskResponse{
-		Task: newTask,
+		Task: &pb.Task{
+			TaskId: taskDb.Id,
+			Title: taskDb.Title,
+			Completed: taskDb.Completed,
+		},
 	}, nil
 }
 
