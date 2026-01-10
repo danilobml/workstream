@@ -34,6 +34,7 @@ build:
 		build --no-cache
 
 rebuild: stop
+	@COMPOSE_BAKE=true
 	docker compose \
 		-f $(COMPOSE_FILE) \
 		--env-file $(ENV_FILE) \

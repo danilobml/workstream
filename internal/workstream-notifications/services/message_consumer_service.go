@@ -17,13 +17,13 @@ type MessageConsumerService interface {
 }
 
 type RabbitMessageConsumerService struct {
-	client              *rabbitmq.RabbitMQ
+	client          *rabbitmq.RabbitMQ
 	eventsProcessor EventsProcessor
 }
 
 func NewRabbitMessageConsumerService(client *rabbitmq.RabbitMQ, eventsProcessor EventsProcessor) *RabbitMessageConsumerService {
 	return &RabbitMessageConsumerService{
-		client:              client,
+		client:          client,
 		eventsProcessor: eventsProcessor,
 	}
 }
@@ -55,6 +55,13 @@ func (rs *RabbitMessageConsumerService) Consume(ctx context.Context) error {
 			}
 			continue
 		}
+		if errors.Is(err, errs.ErrInProgress) {
+			log.Printf("still in progress - event id: %s - (requeue): %v", event.EventID, err)
+			if nackErr := d.Nack(false, true); nackErr != nil {
+				log.Printf("nack failed: %v", nackErr)
+			}
+			continue
+		}
 		if err != nil {
 			log.Printf("process failed (requeue): %v", err)
 			if nackErr := d.Nack(false, true); nackErr != nil {
@@ -72,7 +79,6 @@ func (rs *RabbitMessageConsumerService) Consume(ctx context.Context) error {
 }
 
 func (rs *RabbitMessageConsumerService) ProcessEvent(ctx context.Context, event models.Event) error {
-
 	log.Printf("Received a message = %v\n", event)
 
 	err := rs.eventsProcessor.SaveNewEvent(ctx, event)

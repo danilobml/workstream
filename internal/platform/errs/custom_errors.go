@@ -9,3 +9,5 @@ var ErrBadRequest = errors.New("bad request")
 var ErrServerError = errors.New("")
 
 var ErrAlreadyProcessed = errors.New("duplicate")
+
+var ErrInProgress = errors.New("processing not finished")

@@ -15,11 +15,11 @@ import (
 )
 
 const (
-	serviceName          = "workstream-tasks"
-	httpPortName         = "TASKS_HTTP_PORT"
-	grpcPortName         = "TASKS_GRPC_PORT"
-	postgresDsnName      = "POSTGRES_DSN"
-	rabbitmqUrlName      = "RABBITMQ_URL"
+	serviceName     = "workstream-tasks"
+	httpPortName    = "TASKS_HTTP_PORT"
+	grpcPortName    = "TASKS_GRPC_PORT"
+	postgresDsnName = "POSTGRES_DSN"
+	rabbitmqUrlName = "RABBITMQ_URL"
 )
 
 func main() {

@@ -2,8 +2,10 @@ package services
 
 import (
 	"context"
+	"errors"
 	"time"
 
+	"github.com/danilobml/workstream/internal/platform/errs"
 	plmodel "github.com/danilobml/workstream/internal/platform/models"
 	model "github.com/danilobml/workstream/internal/workstream-notifications/models"
 	"github.com/danilobml/workstream/internal/workstream-notifications/repositories"
@@ -14,29 +16,43 @@ type EventsProcessor interface {
 }
 
 type EventsProcessorService struct {
-	repo repositories.ProcesssedEventsRepo
+	repo repositories.ProcessedEventsRepo
 }
 
-func NewEventsProcessorService(repo repositories.ProcesssedEventsRepo) *EventsProcessorService {
+func NewEventsProcessorService(repo repositories.ProcessedEventsRepo) *EventsProcessorService {
 	return &EventsProcessorService{
 		repo: repo,
 	}
 }
 
 func (ns *EventsProcessorService) SaveNewEvent(ctx context.Context, event plmodel.Event) error {
-	newNotificationProcessedEvent := model.ProcessedEvent{
-		EventID:     event.EventID,
-		EventType:   event.EventType,
-		OccurredAt:  event.OccurredAt,
-		Producer:    event.Producer,
-		TraceID:     event.TraceID,
-		Payload:     event.Payload,
-		ProcessedAt: time.Now(),
+	claim := model.ProcessedEvent{
+		EventID:    event.EventID,
+		EventType:  event.EventType,
+		OccurredAt: event.OccurredAt,
+		Producer:   event.Producer,
+		TraceID:    event.TraceID,
+		Payload:    event.Payload,
 	}
-	err := ns.repo.Insert(ctx, newNotificationProcessedEvent)
-	if err != nil {
+
+	err := ns.repo.Insert(ctx, claim)
+	if err != nil && !errors.Is(err, errs.ErrAlreadyProcessed) {
 		return err
 	}
 
-	return nil
+	if errors.Is(err, errs.ErrAlreadyProcessed) {
+		existing, findErr := ns.repo.Find(ctx, event.EventID)
+		if findErr != nil {
+			return findErr
+		}
+
+		if existing.ProcessedAt != nil {
+			return errs.ErrAlreadyProcessed
+		}
+
+		return errs.ErrInProgress
+	}
+
+	// Perform other operations:
+	return ns.repo.MarkProcessed(ctx, event.EventID, time.Now())
 }
