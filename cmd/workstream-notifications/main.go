@@ -35,11 +35,11 @@ func main() {
 		log.Fatal("unable to read MONGODB_URI from env")
 	}
 
-	rabbitClient, err := rabbitmq.NewRabbitMQClient(ctx, rabbitmqUrl, rabbitmq.Exchange)
+	messageClient, err := rabbitmq.NewRabbitMQClient(ctx, rabbitmqUrl, rabbitmq.Exchange)
 	if err != nil {
 		log.Fatal("workstream-notifications - failed to connect to RabbitMQ", err)
 	}
-	defer rabbitClient.Close()
+	defer messageClient.Close()
 
 	mongoDb, mongoClient, err := mongodb.InitMongoDB(ctx, mongodbUri, mongoDbName)
 	if err != nil {
@@ -51,13 +51,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	mongoRepo := repositories.NewMongoRepo(mongoDb)
+	processedEventsRepo := repositories.NewMongoProcessedEventsRepo(mongoDb)
 
-	mongoService := services.NewMongoService(mongoRepo)
-	rabbitService := services.NewRabbitConsumerService(rabbitClient, mongoService)
+	eventsProcessor := services.NewEventsProcessorService(processedEventsRepo)
+	messageConsumerService := services.NewRabbitMessageConsumerService(messageClient, eventsProcessor)
 
 	go func() {
-		if err := rabbitService.Consume(ctx); err != nil {
+		if err := messageConsumerService.Consume(ctx); err != nil {
 			log.Fatal(err)
 		}
 	}()

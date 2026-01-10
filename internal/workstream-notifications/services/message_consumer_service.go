@@ -11,24 +11,24 @@ import (
 	"github.com/danilobml/workstream/internal/platform/rabbitmq"
 )
 
-type EventConsumerService interface {
+type MessageConsumerService interface {
 	Consume()
 	ProcessEvent(ctx context.Context, event models.Event) error
 }
 
-type RabbitConsumerService struct {
+type RabbitMessageConsumerService struct {
 	client              *rabbitmq.RabbitMQ
-	notificationService NotificationService
+	eventsProcessor EventsProcessor
 }
 
-func NewRabbitConsumerService(client *rabbitmq.RabbitMQ, notificationService NotificationService) *RabbitConsumerService {
-	return &RabbitConsumerService{
+func NewRabbitMessageConsumerService(client *rabbitmq.RabbitMQ, eventsProcessor EventsProcessor) *RabbitMessageConsumerService {
+	return &RabbitMessageConsumerService{
 		client:              client,
-		notificationService: notificationService,
+		eventsProcessor: eventsProcessor,
 	}
 }
 
-func (rs *RabbitConsumerService) Consume(ctx context.Context) error {
+func (rs *RabbitMessageConsumerService) Consume(ctx context.Context) error {
 	msgs, err := rs.client.ConsumeRabbitMQQueue(ctx, rabbitmq.Queue, rabbitmq.Exchange, rabbitmq.Binding)
 	if err != nil {
 		return err
@@ -71,11 +71,11 @@ func (rs *RabbitConsumerService) Consume(ctx context.Context) error {
 	return nil
 }
 
-func (rs *RabbitConsumerService) ProcessEvent(ctx context.Context, event models.Event) error {
+func (rs *RabbitMessageConsumerService) ProcessEvent(ctx context.Context, event models.Event) error {
 
 	log.Printf("Received a message = %v\n", event)
 
-	err := rs.notificationService.CreateNewNotification(ctx, event)
+	err := rs.eventsProcessor.SaveNewEvent(ctx, event)
 	if err != nil {
 		return err
 	}
