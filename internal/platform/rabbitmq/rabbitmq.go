@@ -85,47 +85,56 @@ func dialWithRetry(
 	return nil, fmt.Errorf("failed to connect to rabbitmq after %d attempts: %w", maxAttempts, lastErr)
 }
 
-func (r *RabbitMQ) ConsumeRabbitMQQueue(ctx context.Context, queueName string, exchange string, binding string) (<-chan amqp.Delivery, error) {
-	q, err := r.Channel.QueueDeclare(
-		queueName, // name of the queue
-		true,      // durable
-		false,     // delete when unused
-		false,     // exclusive
-		false,     // no-wait
-		nil,       // arguments
-	)
-	if err != nil {
-		log.Printf("Failed to declare RabbitMQ queue: %s", err)
-		return nil, err
-	}
-
-	err = r.Channel.QueueBind(
-		q.Name,   // queue name
-		binding,  // routing key
-		exchange, // exchange
-		false,    // no wait
-		nil,      // args
-	)
-	if err != nil {
-		log.Printf("Failed to bind queue: %s", err)
-		return nil, err
-	}
-
+func (r *RabbitMQ) ConsumeRabbitMQQueue(ctx context.Context, queueName string) (<-chan amqp.Delivery, error) {
 	msgs, err := r.Channel.ConsumeWithContext(
-		ctx,    // context
-		q.Name, // queue
-		"",     // consumer
-		false,  // auto-ack
-		false,  // exclusive
-		false,  // no-local
-		false,  // no-wait
-		nil,    // args
+		ctx,
+		queueName,
+		"",
+		false,
+		false,
+		false,
+		false,
+		nil,
 	)
-
 	if err != nil {
-		log.Printf("Failed to register RabbitMQ consumer: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("consume %s: %w", queueName, err)
+	}
+	return msgs, nil
+}
+
+func (r *RabbitMQ) DeclareQueues(mainQueueName, exchange, binding string) error {
+	dlx := fmt.Sprintf("%s.dlx", mainQueueName)
+	dlq := fmt.Sprintf("%s.dlq", mainQueueName)
+	
+	// Declare DLX and DLQ
+	if err := r.Channel.ExchangeDeclare(dlx, "direct", true, false, false, false, nil); err != nil {
+		return fmt.Errorf("declare dlx %s: %w", dlx, err)
 	}
 
-	return msgs, nil
+	if _, err := r.Channel.QueueDeclare(dlq, true, false, false, false, nil); err != nil {
+		return fmt.Errorf("declare dlq %s: %w", dlq, err)
+	}
+
+	if err := r.Channel.QueueBind(dlq, dlq, dlx, false, nil); err != nil {
+		return fmt.Errorf("bind dlq %s to dlx %s: %w", dlq, dlx, err)
+	}
+
+	// Declare main queue with DLX args
+	args := amqp.Table{
+		"x-dead-letter-exchange":    dlx,
+		"x-dead-letter-routing-key": dlq,
+	}
+
+	q, err := r.Channel.QueueDeclare(mainQueueName, true, false, false, false, args)
+	if err != nil {
+		return fmt.Errorf("declare main queue %s: %w", mainQueueName, err)
+	}
+
+	if err := r.Channel.QueueBind(q.Name, binding, exchange, false, nil); err != nil {
+		return fmt.Errorf("bind main queue %s: %w", mainQueueName, err)
+	}
+
+	log.Printf("RabbitMQ main and dead letter queues for %s successfully declared and bound!", mainQueueName)
+
+	return nil
 }

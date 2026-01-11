@@ -41,6 +41,10 @@ func main() {
 	}
 	defer messageClient.Close()
 
+	if err := messageClient.DeclareQueues(rabbitmq.Queue, rabbitmq.Exchange, rabbitmq.Binding); err != nil {
+		log.Fatal("workstream-notifications - failed to declare queues", err)
+	}
+
 	mongoDb, mongoClient, err := mongodb.InitMongoDB(ctx, mongodbUri, mongoDbName)
 	if err != nil {
 		log.Fatal("workstream-notifications - failed to connect to MongoDB", err)

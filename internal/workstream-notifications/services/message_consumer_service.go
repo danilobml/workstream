@@ -29,7 +29,7 @@ func NewRabbitMessageConsumerService(client *rabbitmq.RabbitMQ, eventsProcessor 
 }
 
 func (rs *RabbitMessageConsumerService) Consume(ctx context.Context) error {
-	msgs, err := rs.client.ConsumeRabbitMQQueue(ctx, rabbitmq.Queue, rabbitmq.Exchange, rabbitmq.Binding)
+	msgs, err := rs.client.ConsumeRabbitMQQueue(ctx, rabbitmq.Queue)
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,11 @@ func (rs *RabbitMessageConsumerService) Consume(ctx context.Context) error {
 
 		err := rs.ProcessEvent(ctx, event)
 		if errors.Is(err, errs.ErrAlreadyProcessed) {
-			log.Printf("process failed (skip): %v", err)
+			log.Printf(
+				"event skipped (already processed): event_id=%s trace_id=%s",
+				event.EventID,
+				event.TraceID,
+			)
 			if ackErr := d.Ack(false); ackErr != nil {
 				log.Printf("ack failed: %v", ackErr)
 			}
