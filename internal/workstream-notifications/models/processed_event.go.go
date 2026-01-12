@@ -10,4 +10,5 @@ type ProcessedEvent struct {
 	TraceID     string     `bson:"trace_id"`
 	Payload     []byte     `bson:"payload"`
 	ProcessedAt *time.Time `bson:"processed_at,omitempty"`
+	ClaimedAt   *time.Time `bson:"claimed_at,omitempty"`
 }
