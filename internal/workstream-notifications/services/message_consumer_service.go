@@ -29,7 +29,7 @@ func NewRabbitMessageConsumerService(client *rabbitmq.RabbitMQ, eventsProcessor 
 }
 
 func (rs *RabbitMessageConsumerService) Consume(ctx context.Context) error {
-	msgs, err := rs.client.ConsumeRabbitMQQueue(ctx, rabbitmq.Queue)
+	msgs, err := rs.client.ConsumeRabbitMQQueue(ctx, rabbitmq.NotificationsQueue)
 	if err != nil {
 		return err
 	}

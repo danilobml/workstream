@@ -15,17 +15,17 @@ type EventsService interface {
 	Publish(ctx context.Context, event models.Event) error
 }
 
-type RabbitProducerService struct {
+type RabbitMailsProducerService struct {
 	client *rabbitmq.RabbitMQ
 }
 
-func NewRabbitProducerService(client *rabbitmq.RabbitMQ) *RabbitProducerService {
-	return &RabbitProducerService{
+func NewRabbitProducerService(client *rabbitmq.RabbitMQ) *RabbitMailsProducerService {
+	return &RabbitMailsProducerService{
 		client: client,
 	}
 }
 
-func (rs *RabbitProducerService) Publish(ctx context.Context, event models.Event) error {
+func (rs *RabbitMailsProducerService) Publish(ctx context.Context, event models.Event) error {
 	body, err := json.Marshal(event)
 	if err != nil {
 		return fmt.Errorf("failed to marshal message: %v", err)
@@ -34,11 +34,11 @@ func (rs *RabbitProducerService) Publish(ctx context.Context, event models.Event
 	routingKey := event.EventType
 
 	err = rs.client.Channel.PublishWithContext(
-		ctx,               // context
-		rabbitmq.NotificationsExchange, // exchange
-		routingKey,        // routing key
-		false,             // mandatory
-		false,             // immediate
+		ctx,                            // context
+		rabbitmq.MailerExchange, 		// exchange
+		routingKey,                     // routing key
+		false,                          // mandatory
+		false,                          // immediate
 		amqp.Publishing{
 			ContentType:  "application/json",
 			DeliveryMode: amqp.Persistent,
@@ -49,7 +49,7 @@ func (rs *RabbitProducerService) Publish(ctx context.Context, event models.Event
 		return fmt.Errorf("failed to publish message: %v", err)
 	}
 
-	log.Printf("Message published to exchange: %s with key: %s", rabbitmq.NotificationsExchange, routingKey)
+	log.Printf("Message published to exchange: %s with key: %s", rabbitmq.MailerExchange, routingKey)
 
 	return nil
 }

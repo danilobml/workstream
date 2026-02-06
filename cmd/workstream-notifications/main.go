@@ -35,13 +35,23 @@ func main() {
 		log.Fatal("unable to read MONGODB_URI from env")
 	}
 
-	messageClient, err := rabbitmq.NewRabbitMQClient(ctx, rabbitmqUrl, rabbitmq.Exchange)
+	messageClient, err := rabbitmq.NewRabbitMQClient(ctx, rabbitmqUrl, rabbitmq.NotificationsExchange)
 	if err != nil {
 		log.Fatal("workstream-notifications - failed to connect to RabbitMQ", err)
 	}
 	defer messageClient.Close()
 
-	if err := messageClient.DeclareQueues(rabbitmq.Queue, rabbitmq.Exchange, rabbitmq.Binding); err != nil {
+	if err := messageClient.DeclareQueues(rabbitmq.NotificationsQueue, rabbitmq.NotificationsExchange, rabbitmq.NotificationsBinding); err != nil {
+		log.Fatal("workstream-notifications - failed to declare queues", err)
+	}
+
+	mailMessageClient, err := rabbitmq.NewRabbitMQClient(ctx, rabbitmqUrl, rabbitmq.MailerExchange)
+	if err != nil {
+		log.Fatal("workstream-notifications - failed to connect to RabbitMQ", err)
+	}
+	defer messageClient.Close()
+
+	if err := mailMessageClient.DeclareQueues(rabbitmq.MailerQueue, rabbitmq.MailerExchange, rabbitmq.MailerBinding); err != nil {
 		log.Fatal("workstream-notifications - failed to declare queues", err)
 	}
 
@@ -57,7 +67,9 @@ func main() {
 
 	processedEventsRepo := repositories.NewMongoProcessedEventsRepo(mongoDb)
 
-	eventsProcessor := services.NewEventsProcessorService(processedEventsRepo)
+	messageProducerService := services.NewRabbitProducerService(mailMessageClient)
+
+	eventsProcessor := services.NewEventsProcessorService(processedEventsRepo, messageProducerService)
 	messageConsumerService := services.NewRabbitMessageConsumerService(messageClient, eventsProcessor)
 
 	go func() {

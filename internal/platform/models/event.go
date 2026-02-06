@@ -13,3 +13,8 @@ type Event struct {
 	TraceID    string          `json:"trace_id,omitempty"`
 	Payload    json.RawMessage `json:"payload"`
 }
+
+type MailEvent struct {
+	Event
+	MailPayload MailInput `json:"-"` // decoded manually from Event.Payload
+}

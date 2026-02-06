@@ -52,7 +52,7 @@ func main() {
 	}
 	defer dbConnPool.Close()
 
-	rabbitClient, err := rabbitmq.NewRabbitMQClient(ctx, rabbitmqUrl, rabbitmq.Exchange)
+	rabbitClient, err := rabbitmq.NewRabbitMQClient(ctx, rabbitmqUrl, rabbitmq.NotificationsExchange)
 	if err != nil {
 		log.Fatal("workstream-tasks - failed to connect to RabbitMQ", err)
 	}

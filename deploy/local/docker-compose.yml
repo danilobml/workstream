@@ -120,6 +120,26 @@ services:
     networks:
       - workstream
 
+  workstream-mailer:
+    build:
+      context: ../..
+      dockerfile: ./deploy/local/Dockerfile.mailer
+    environment:
+      MAILER_HTTP_PORT: ${MAILER_HTTP_PORT}
+      MAILER_HTTP_HOST_PORT: ${MAILER_HTTP_HOST_PORT}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      MAILER_FROM_EMAIL: ${MAILER_FROM_EMAIL}
+      MAILER_FROM_EMAIL_PASS: ${MAILER_FROM_EMAIL_PASS}
+      MAILER_FROM_EMAIL_SMTP: ${MAILER_FROM_EMAIL_SMTP}
+      MAILER_SMTP_ADDR: ${MAILER_SMTP_ADDR}
+    ports:
+      - "${MAILER_HTTP_HOST_PORT}:${MAILER_HTTP_PORT}"
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq
+    networks:
+      - workstream
+
   workstream-gateway:
     build:
       context: ../..

@@ -1,7 +1,11 @@
 package rabbitmq
 
 const (
-	Queue = "workstream.notifications"
-	Exchange = "workstream.events"
-	Binding  = "workstream.task.#"
+	NotificationsQueue = "workstream.notifications"
+	NotificationsExchange = "workstream.events"
+	NotificationsBinding  = "workstream.task.#"
+
+	MailerQueue = "workstream.mailer"
+	MailerExchange = "workstream.mailer"
+	MailerBinding  = "workstream.mail.#"
 )
