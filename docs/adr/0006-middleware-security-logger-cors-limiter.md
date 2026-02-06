@@ -1,4 +1,4 @@
-# ADR-0005: HTTP Middleware Stack for Go REST APIs
+# ADR-0006: HTTP Middleware Stack for Go REST APIs
 
 ## Status
 Accepted
