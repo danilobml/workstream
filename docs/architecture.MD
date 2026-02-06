@@ -26,6 +26,7 @@ This project is intentionally designed to be minimal, not feature-complete and o
 **Communication**
 - REST (client-service)
 - gRPC client to `workstream-tasks` (service-service)
+- gRPC client to `workstream-identity` (service-service)
 
 ---
 
@@ -60,6 +61,36 @@ This project is intentionally designed to be minimal, not feature-complete and o
 
 ---
 
+### 2.4 Identity Service (Auth + User Manager)
+**Responsibility**
+- Owns user identities and authentication flows (register/login/password reset)
+- Issues/validates auth tokens (implementation detail)
+- Provides internal user/auth operations for other services (when needed)
+
+**Data**
+- Postgres (single-service ownership)
+
+**Communication**
+- REST endpoints exposed via gateway (client-facing)
+- Optional gRPC server for internal service-to-service calls (e.g., ValidateToken, GetUserById)
+
+---
+
+### 2.5 Mailer Service (Email Sender)
+**Responsibility**
+- Consumes mail events and sends emails
+- Provides a single scoped side-effect: deliver email via SMTP provider
+- Designed for async, at-least-once delivery (idempotency handled via `event_id`/dedupe strategy)
+
+**Data**
+- None required (stateless sender); can add store later if needed (non-goal here)
+
+**Communication**
+- Event consumer from RabbitMQ (mailer queue)
+- No direct client-facing API
+
+---
+
 ## 3. Communication Contracts
 
 ### 3.1 REST API (External)
@@ -70,6 +101,10 @@ All external traffic enters via the gateway.
 | POST /api/v1/tasks | Create task |
 | GET /api/v1/tasks | List tasks |
 | POST /api/v1/tasks/{id}/complete | Complete task |
+| POST /api/v1/auth/register | Register user |
+| POST /api/v1/auth/login | Login user |
+| POST /api/v1/auth/request-password | Request password reset |
+| PUT /api/v1/auth/reset-password | Reset password |
 
 ---
 
@@ -83,6 +118,14 @@ Gateway calls Tasks via gRPC.
 | ListTasks | List tasks |
 | CompleteTask | Mark task as completed |
 
+Internal gRPC for Identity (used only if needed):
+
+| RPC | Purpose |
+|----|--------|
+| ValidateToken | Validate auth token |
+| GetUserById | Retrieve user by id |
+| ListUsers | Admin user listing |
+
 ---
 
 ### 3.3 Events (RabbitMQ)
@@ -91,6 +134,7 @@ Gateway calls Tasks via gRPC.
 |-----|---------|----------|
 | workstream.task.created.v1 | workstream-tasks | workstream-notifications |
 | workstream.task.completed.v1 | workstream-tasks | workstream-notifications |
+| workstream.mail.send.v1 | workstream-tasks, workstream-notifications, workstream-identity | workstream-mailer |
 
 **Event envelope**
 - event_id
@@ -104,6 +148,8 @@ Gateway calls Tasks via gRPC.
 - Exchange: `workstream.events`
 - Queue: `workstream.notifications`
 - Dead-letter queue: `workstream.notifications.dlq`
+- Queue: `workstream.mailer`
+- Dead-letter queue: `workstream.mailer.dlq`
 
 ---
 
@@ -118,7 +164,11 @@ Gateway calls Tasks via gRPC.
 - Append-only storage of processed event records
 - Payload snapshots retained for debugging and traceability
 
-### 4.3 Redis
+### 4.3 Identity Service (Postgres)
+- Relational source of truth for users, credentials, and auth flows
+- Only the Identity service accesses this database
+
+### 4.4 Redis
 - Purpose: consumer idempotency
 - Key pattern: `workstream:processed:<event_id>`
 - TTL: 24 hours

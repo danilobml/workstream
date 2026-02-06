@@ -21,8 +21,18 @@ Events are published by domain services and consumed by downstream processors.
 - Routing keys:
   - `workstream.task.*`
 
-#### Dead-Letter Queue
+#### Notifications Dead-Letter Queue
 - Name: `workstream.notifications.dlq`
+- Purpose: stores messages that could not be processed after retries
+
+#### Mailer Queue
+- Name: `workstream.mailer`
+- Bound to exchange: `workstream.events`
+- Routing keys:
+  - `workstream.mail.*`
+
+#### Mailer Dead-Letter Queue
+- Name: `workstream.mailer.dlq`
 - Purpose: stores messages that could not be processed after retries
 
 ---
@@ -39,7 +49,8 @@ Events are published by domain services and consumed by downstream processors.
 **Description**
 - Emitted when a task is created successfully.
 
-- Payload contains: \task_id` (UUID).`
+**Payload**
+- task_id (UUID)
 
 ---
 
@@ -53,7 +64,27 @@ Events are published by domain services and consumed by downstream processors.
 **Description**
 - Emitted when a task is marked as completed.
 
-- Payload contains: \task_id` (UUID).`
+**Payload**
+- task_id (UUID)
+
+---
+
+### workstream.mail.send.v1
+**Producer**
+- workstream-tasks
+- workstream-notifications
+- workstream-identity
+
+**Consumers**
+- workstream-mailer
+
+**Description**
+- Requests the mailer service to send an email asynchronously.
+
+**Payload**
+- to (string[]) — recipient emails
+- subject (string)
+- body (string)
 
 ---
 
@@ -72,7 +103,7 @@ All events share a common envelope.
 ## Delivery Semantics
 - Delivery guarantee: at-least-once
 - Consumers must be idempotent
-- Redis is used to deduplicate events by `event_id`
+- Redis can be used to deduplicate events by `event_id` where applicable
 
 ---
 
