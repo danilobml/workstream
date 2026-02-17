@@ -7,7 +7,7 @@ COMPOSE_FILE=deploy/local/docker-compose.yml
 ENV_FILE=.env
 GOOSE_MIGRATION_DIR=./internal/workstream-tasks/migrations 
 
-.PHONY: run stop logs build rebuild rpcgen goose_up goose_down
+.PHONY: run stop logs build rebuild gen_tasks gen_identity goose_up goose_down
 
 run:
 	docker compose \
@@ -40,7 +40,7 @@ rebuild: stop
 		--env-file $(ENV_FILE) \
 		up -d --build --force-recreate
 
-rpcgen:
+gen_tasks:
 	protoc \
 		-I api/proto \
 		--go_out=internal/gen \
@@ -48,6 +48,15 @@ rpcgen:
 		--go-grpc_out=internal/gen \
 		--go-grpc_opt=paths=source_relative \
 		api/proto/tasks/v1/tasks.proto
+
+gen_identity:
+	protoc \
+		-I api/proto \
+		--go_out=internal/gen \
+		--go_opt=paths=source_relative \
+		--go-grpc_out=internal/gen \
+		--go-grpc_opt=paths=source_relative \
+		api/proto/identity/v1/identity.proto
 
 goose_up:
 	@GOOSE_DRIVER=postgres GOOSE_DBSTRING=$(POSTGRES_DSN) \

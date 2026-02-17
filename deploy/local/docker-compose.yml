@@ -1,20 +1,39 @@
 services:
   # Persistence and communication:
-  postgres:
+  postgres_tasks:
     image: postgres:alpine
     environment:
-      POSTGRES_DB: workstream
+      POSTGRES_DB: workstream_tasks
       POSTGRES_PASSWORD: workstream
       POSTGRES_USER: workstream
     ports:
       - "5435:5432"
     restart: unless-stopped
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-tasks-data:/var/lib/postgresql/data
     networks:
       - workstream
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U workstream -d workstream"]
+      test: ["CMD-SHELL", "pg_isready -U workstream -d workstream_tasks"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  postgres_identity:
+    image: postgres:alpine
+    environment:
+      POSTGRES_DB: workstream_identity
+      POSTGRES_PASSWORD: workstream
+      POSTGRES_USER: workstream
+    ports:
+      - "5436:5432"
+    restart: unless-stopped
+    volumes:
+      - postgres-identity-data:/var/lib/postgresql/data
+    networks:
+      - workstream
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U workstream -d workstream_identity"]
       interval: 2s
       timeout: 3s
       retries: 30
@@ -63,19 +82,34 @@ services:
       - rabbitmq-data:/var/lib/rabbitmq/
     networks:
       - workstream
-  goose:
+
+  goose_tasks:
     image: ghcr.io/kukymbr/goose-docker:3.26.0
     depends_on:
-      postgres:
+      postgres_tasks:
         condition: service_healthy
     networks:
       - workstream
     environment:
       GOOSE_DRIVER: postgres
-      GOOSE_DBSTRING: ${POSTGRES_DSN}
+      GOOSE_DBSTRING: ${POSTGRES_TASKS_DSN}
       GOOSE_COMMAND: up
     volumes:
       - ../../internal/workstream-tasks/db/migrations:/migrations:ro
+
+  goose_identity:
+    image: ghcr.io/kukymbr/goose-docker:3.26.0
+    depends_on:
+      postgres_identity:
+        condition: service_healthy
+    networks:
+      - workstream
+    environment:
+      GOOSE_DRIVER: postgres
+      GOOSE_DBSTRING: ${POSTGRES_IDENTITY_DSN}
+      GOOSE_COMMAND: up
+    volumes:
+      - ../../internal/workstream-identity/db/migrations:/migrations:ro
 
   # Microservices:
   workstream-tasks:
@@ -88,14 +122,14 @@ services:
       TASKS_GRPC_PORT: ${TASKS_GRPC_PORT}
       TASKS_GRPC_HOST_PORT: ${TASKS_GRPC_HOST_PORT}
       TASKS_GRPC_ADDR: ${TASKS_GRPC_ADDR}
-      POSTGRES_DSN: ${POSTGRES_DSN}
+      POSTGRES_DSN: ${POSTGRES_TASKS_DSN}
       RABBITMQ_URL: ${RABBITMQ_URL}
     ports:
       - "${TASKS_HTTP_HOST_PORT}:${TASKS_HTTP_PORT}"
       - "${TASKS_GRPC_HOST_PORT}:${TASKS_GRPC_PORT}"
     restart: unless-stopped
     depends_on:
-      - postgres
+      - postgres_tasks
       - rabbitmq
     networks:
       - workstream
@@ -148,16 +182,44 @@ services:
       GATEWAY_HTTP_PORT: ${GATEWAY_HTTP_PORT}
       GATEWAY_HTTP_HOST_PORT: ${GATEWAY_HTTP_HOST_PORT}
       TASKS_GRPC_ADDR: ${TASKS_GRPC_ADDR}
+      IDENTITY_GRPC_ADDR: ${IDENTITY_GRPC_ADDR}
+      IDENTITY_API_KEY: ${IDENTITY_API_KEY}
+      SECRET_JWT_KEY: ${SECRET_JWT_KEY}
     ports:
       - "${GATEWAY_HTTP_HOST_PORT}:${GATEWAY_HTTP_PORT}"
     restart: unless-stopped
     depends_on:
       - workstream-tasks
+      - workstream-identity
+    networks:
+      - workstream
+
+  workstream-identity:
+    build:
+      context: ../..
+      dockerfile: ./deploy/local/Dockerfile.identity
+    environment:
+      IDENTITY_HTTP_PORT: ${IDENTITY_HTTP_PORT}
+      IDENTITY_HTTP_HOST_PORT: ${IDENTITY_HTTP_HOST_PORT}
+      IDENTITY_GRPC_PORT: ${IDENTITY_GRPC_PORT}
+      IDENTITY_GRPC_HOST_PORT: ${IDENTITY_GRPC_HOST_PORT}
+      POSTGRES_IDENTITY_DSN: ${POSTGRES_IDENTITY_DSN}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      SECRET_JWT_KEY: ${SECRET_JWT_KEY}
+      BASE_RESTORE_PASS_URL: ${BASE_RESTORE_PASS_URL}
+    ports:
+      - "${IDENTITY_HTTP_HOST_PORT}:${IDENTITY_HTTP_PORT}"
+      - "${IDENTITY_GRPC_HOST_PORT}:${IDENTITY_GRPC_PORT}"
+    restart: unless-stopped
+    depends_on:
+      - postgres_identity
+      - rabbitmq
     networks:
       - workstream
 
 volumes:
-  postgres-data:
+  postgres-tasks-data:
+  postgres-identity-data:
   redis-data:
   mongo-data:
   rabbitmq-data:

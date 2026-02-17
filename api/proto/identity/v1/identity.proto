@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+option go_package = "github.com/danilobml/workstream/internal/gen/identity/v1";
+
+service IdentityService {
+    rpc Register(RegisterRequest) returns (RegisterResponse);
+	rpc Login(LoginRequest) returns (LoginResponse);
+/* 	rpc Unregister(UnregisterRequest) returns (UnregisterResponse);
+	rpc GetUserData(GetUserDataRequest) returns (SingleUserResponse);
+	rpc RequestPasswordReset(RequestPasswordResetRequest) returns (RequestPasswordResetResponse);
+	rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
+	rpc ListAllUsers(ListAllUsers) returns (UserListResponse);
+	rpc UpdateUserData(UpdateUserRequest) returns (UpdateUserResponse);
+	rpc RemoveUser(RemoveUserRequest) returns (RemoveUserResponse); 
+	rpc GetUser(GetUserRequest) returns (SingleUserResponse);
+	rpc CheckUser(CheckUserRequest) returns (CheckUserResponse); */
+};
+
+message RegisterRequest {
+    string email = 1;
+    string password = 2;
+};
+
+message RegisterResponse {
+    string token = 1;
+};
+
+message LoginRequest {
+    string email = 1;
+    string password = 2;
+};
+
+message LoginResponse {
+    string token = 1;
+};

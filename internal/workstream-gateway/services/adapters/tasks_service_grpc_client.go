@@ -9,15 +9,15 @@ import (
 	"google.golang.org/grpc"
 )
 
-type Client struct {
+type TasksServiceClient struct {
 	pb pb.TasksServiceClient
 }
 
-func NewTasksServiceClient(conn grpc.ClientConnInterface) *Client {
-	return &Client{pb: pb.NewTasksServiceClient(conn)}
+func NewTasksServiceClient(conn grpc.ClientConnInterface) *TasksServiceClient {
+	return &TasksServiceClient{pb: pb.NewTasksServiceClient(conn)}
 }
 
-func (c *Client) CreateTask(ctx context.Context, title string) (*models.Task, error) {
+func (c *TasksServiceClient) CreateTask(ctx context.Context, title string) (*models.Task, error) {
 	resp, err := c.pb.CreateTask(ctx, &pb.CreateTaskRequest{Title: title})
 	if err != nil {
 		return nil, grpcutils.ParseGrpcError(err)
@@ -31,7 +31,7 @@ func (c *Client) CreateTask(ctx context.Context, title string) (*models.Task, er
 	}, nil
 }
 
-func (c *Client) GetTask(ctx context.Context, id string) (*models.Task, error) {
+func (c *TasksServiceClient) GetTask(ctx context.Context, id string) (*models.Task, error) {
 	resp, err := c.pb.GetTask(ctx, &pb.GetTaskRequest{TaskId: id})
 	if err != nil {
 		return nil, grpcutils.ParseGrpcError(err)
@@ -45,7 +45,7 @@ func (c *Client) GetTask(ctx context.Context, id string) (*models.Task, error) {
 	}, nil
 }
 
-func (c *Client) ListTasks(ctx context.Context) ([]*models.Task, error) {
+func (c *TasksServiceClient) ListTasks(ctx context.Context) ([]*models.Task, error) {
 	resp, err := c.pb.ListTasks(ctx, &pb.ListTasksRequest{})
 	if err != nil {
 		return nil, grpcutils.ParseGrpcError(err)
@@ -64,7 +64,7 @@ func (c *Client) ListTasks(ctx context.Context) ([]*models.Task, error) {
 	return tasks, nil
 }
 
-func (c *Client) CompleteTask(ctx context.Context, id string) error {
+func (c *TasksServiceClient) CompleteTask(ctx context.Context, id string) error {
 	_, err := c.pb.CompleteTask(ctx, &pb.CompleteTaskRequest{TaskId: id})
 	if err != nil {
 		return grpcutils.ParseGrpcError(err)

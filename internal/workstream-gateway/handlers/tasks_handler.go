@@ -14,24 +14,24 @@ import (
 	services "github.com/danilobml/workstream/internal/workstream-gateway/services/ports"
 )
 
-type IGatewayHandler interface {
+type ITasksHandler interface {
 	CreateNewTask(w http.ResponseWriter, r *http.Request)
 	GetTask(w http.ResponseWriter, r *http.Request)
 	GetTasks(w http.ResponseWriter, r *http.Request)
 	CompleteTask(w http.ResponseWriter, r *http.Request)
 }
 
-type GatewayHandler struct {
+type TasksHandler struct {
 	tasksService services.TasksServicePort
 }
 
-func NewGatewayHandler(tasksService services.TasksServicePort) *GatewayHandler {
-	return &GatewayHandler{
+func NewTasksHandler(tasksService services.TasksServicePort) *TasksHandler {
+	return &TasksHandler{
 		tasksService: tasksService,
 	}
 }
 
-func (gh *GatewayHandler) CreateNewTask(w http.ResponseWriter, r *http.Request) {
+func (gh *TasksHandler) CreateNewTask(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
@@ -61,7 +61,7 @@ func (gh *GatewayHandler) CreateNewTask(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func (gh *GatewayHandler) GetTask(w http.ResponseWriter, r *http.Request) {
+func (gh *TasksHandler) GetTask(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
@@ -93,7 +93,7 @@ func (gh *GatewayHandler) GetTask(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (gh *GatewayHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
+func (gh *TasksHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
@@ -119,7 +119,7 @@ func (gh *GatewayHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (gh *GatewayHandler) CompleteTask(w http.ResponseWriter, r *http.Request) {
+func (gh *TasksHandler) CompleteTask(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
