@@ -25,6 +25,7 @@ type RegisterRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
 	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	Roles         []string               `protobuf:"bytes,3,rep,name=roles,proto3" json:"roles,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -71,6 +72,13 @@ func (x *RegisterRequest) GetPassword() string {
 		return x.Password
 	}
 	return ""
+}
+
+func (x *RegisterRequest) GetRoles() []string {
+	if x != nil {
+		return x.Roles
+	}
+	return nil
 }
 
 type RegisterResponse struct {
@@ -217,10 +225,11 @@ var File_identity_v1_identity_proto protoreflect.FileDescriptor
 
 const file_identity_v1_identity_proto_rawDesc = "" +
 	"\n" +
-	"\x1aidentity/v1/identity.proto\"C\n" +
+	"\x1aidentity/v1/identity.proto\"Y\n" +
 	"\x0fRegisterRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\"(\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\x12\x14\n" +
+	"\x05roles\x18\x03 \x03(\tR\x05roles\"(\n" +
 	"\x10RegisterResponse\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\"@\n" +
 	"\fLoginRequest\x12\x14\n" +

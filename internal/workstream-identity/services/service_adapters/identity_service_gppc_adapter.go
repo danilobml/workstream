@@ -21,6 +21,7 @@ func (a *IdentityGrpcAdapter) Register(ctx context.Context, req *pb.RegisterRequ
 	out, err := a.svc.Register(ctx, dtos.RegisterRequest{
 		Email:    req.GetEmail(),
 		Password: req.GetPassword(),
+		Roles: req.GetRoles(),
 	})
 	if err != nil {
 		return nil, err

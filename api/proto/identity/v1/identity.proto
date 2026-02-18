@@ -19,6 +19,7 @@ service IdentityService {
 message RegisterRequest {
     string email = 1;
     string password = 2;
+    repeated string roles = 3;
 };
 
 message RegisterResponse {
