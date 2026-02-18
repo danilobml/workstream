@@ -72,6 +72,9 @@ func main() {
 	root.Handle("/tasks/", http.StripPrefix("/tasks", tasksRouter))
 	root.Handle("/identity/", http.StripPrefix("/identity", identityRouter))
 
+	// Swagger openapi
+	routes.RegisterOpenapiRoutes(root)
+
 	handler := middleware.ApplyMiddlewares(
 		middleware.Recover,
 		middleware.RequestId,
