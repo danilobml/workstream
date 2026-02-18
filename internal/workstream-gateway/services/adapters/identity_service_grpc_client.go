@@ -18,7 +18,7 @@ func NewIdentityServiceClient(conn grpc.ClientConnInterface) *IdentityClient {
 }
 
 func (c *IdentityClient) Register(ctx context.Context, registerReq dtos.RegisterRequest) (dtos.RegisterResponse, error) {
-	resp, err := c.pb.Register(ctx, &pb.RegisterRequest{Email: registerReq.Email, Password: registerReq.Password})
+	resp, err := c.pb.Register(ctx, &pb.RegisterRequest{Email: registerReq.Email, Password: registerReq.Password, Roles: registerReq.Roles})
 	if err != nil {
 		return dtos.RegisterResponse{}, grpcutils.ParseGrpcError(err)
 	}
