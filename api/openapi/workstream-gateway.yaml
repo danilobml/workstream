@@ -1,13 +1,13 @@
 openapi: 3.2.0
 
 info:
-  title: Tasks microservice
+  title: Workstream Gateway API
   description: |
-    API for creating, reading, and completing tasks.
+    Public API gateway for the Workstream platform, routing client requests to other services.
   version: 1.0.0
 
 servers:
-  - url: http://localhost:8080/api/v1
+  - url: http://localhost:8080
     description: Local development server.
 
 paths:
@@ -19,6 +19,24 @@ paths:
       responses:
         "200":
           description: A list of tasks
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [tasks]
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Task"
+              example:
+                tasks:
+                  - id: "0b2f3e9a-7d1b-4b4c-9c2b-7b9e8ef1e1a1"
+                    title: "Buy milk"
+                    completed: false
+                  - id: "a7c4c2c4-6c4d-4b1b-8f34-3b9a4a6c2b77"
+                    title: "Call the dentist"
+                    completed: true
     post:
       operationId: createTask
       summary: Creates a task
@@ -26,19 +44,76 @@ paths:
       requestBody:
         required: true
         content:
-          application/json: {}
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title:
+                  type: string
+            example:
+              title: Buy milk
       responses:
         "201":
           description: Task successfully created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [task]
+                properties:
+                  task:
+                    $ref: "#/components/schemas/Task"
+              example:
+                task:
+                  id: "0b2f3e9a-7d1b-4b4c-9c2b-7b9e8ef1e1a1"
+                  title: "Buy milk"
+                  completed: false
+        "400":
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "title is required"
 
   /tasks/{id}:
     get:
       operationId: getTask
       summary: Returns an existing task
       tags: [tasks]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
           description: A task
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [task]
+                properties:
+                  task:
+                    $ref: "#/components/schemas/Task"
+              example:
+                task:
+                  id: "0b2f3e9a-7d1b-4b4c-9c2b-7b9e8ef1e1a1"
+                  title: "Buy milk"
+                  completed: false
+        "404":
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "task not found"
 
   /tasks/{id}/complete:
     post:
@@ -55,12 +130,115 @@ paths:
       responses:
         "200":
           description: Task successfully completed
+        "404":
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "task not found"
+
+  /identity/register:
+    post:
+      operationId: register
+      summary: Register new user
+      tags: [identity]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - roles
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 6
+                roles:
+                  type: array
+                  items:
+                    type: string
+                    enum: [user, admin]
+            example:
+              email: test2@mail.com
+              password: test2-pass
+              roles: ["admin"]
+      responses:
+        "201":
+          description: User successfully registered
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [token]
+                properties:
+                  token:
+                    type: string
+              example:
+                token: eyJhbGciOi...
+
+  /identity/login:
+    post:
+      operationId: login
+      summary: Login existing user
+      tags: [identity]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 6
+            example:
+              email: test2@mail.com
+              password: test2-pass
+      responses:
+        "200":
+          description: Successfully logged in
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [token]
+                properties:
+                  token:
+                    type: string
+              example:
+                token: eyJhbGciOi...
 
 components:
   schemas:
     Task:
       type: object
+      required: [id, title, completed]
       properties:
         id:
           type: string
           format: uuid
+        title:
+          type: string
+        completed:
+          type: boolean
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
