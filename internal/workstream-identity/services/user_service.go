@@ -9,7 +9,6 @@ import (
 	authcontext "github.com/danilobml/workstream/internal/platform/auth_context"
 	"github.com/danilobml/workstream/internal/platform/dtos"
 	"github.com/danilobml/workstream/internal/platform/errs"
-	"github.com/danilobml/workstream/internal/platform/httpx/middleware"
 	"github.com/danilobml/workstream/internal/platform/jwt"
 	"github.com/danilobml/workstream/internal/platform/models"
 	"github.com/danilobml/workstream/internal/workstream-identity/helpers"
@@ -101,7 +100,7 @@ func (us *UserService) Login(ctx context.Context, loginReq dtos.LoginRequest) (d
 }
 
 func (us *UserService) GetUserData(ctx context.Context) (dtos.ResponseUser, error) {
-	claims, ok := middleware.GetClaimsFromContext(ctx)
+	claims, ok := authcontext.GetClaims(ctx)
 	if !ok {
 		return dtos.ResponseUser{}, errs.ErrInvalidToken
 	}

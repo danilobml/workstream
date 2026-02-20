@@ -3,7 +3,7 @@ package routes
 import (
 	"net/http"
 
-	"github.com/danilobml/workstream/internal/platform/httpx/middleware"
+	"github.com/danilobml/workstream/internal/workstream-gateway/middleware"
 	"github.com/danilobml/workstream/internal/workstream-gateway/handlers"
 )
 

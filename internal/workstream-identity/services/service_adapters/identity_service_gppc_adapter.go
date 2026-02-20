@@ -64,6 +64,7 @@ func (a *IdentityGrpcAdapter) ListAllUsers(ctx context.Context, req *pb.ListAllU
 			Id:    user.ID.String(),
 			Email: user.Email,
 			Roles: roles,
+			IsActive: user.IsActive,
 		}
 
 		responseUsers = append(responseUsers, respUser)

@@ -6,7 +6,7 @@ import (
 	"os"
 
 	httpserver "github.com/danilobml/workstream/internal/platform/httpserver"
-	"github.com/danilobml/workstream/internal/platform/httpx/middleware"
+	"github.com/danilobml/workstream/internal/workstream-gateway/middleware"
 	"github.com/danilobml/workstream/internal/platform/jwt"
 	"github.com/danilobml/workstream/internal/workstream-gateway/grpc"
 	"github.com/danilobml/workstream/internal/workstream-gateway/handlers"

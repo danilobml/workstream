@@ -4,13 +4,12 @@ import (
 	"context"
 
 	authcontext "github.com/danilobml/workstream/internal/platform/auth_context"
-	"github.com/danilobml/workstream/internal/platform/httpx/middleware"
 	"github.com/danilobml/workstream/internal/platform/models"
 )
 
 // Helpers
 func (us *UserService) IsUserOwner(ctx context.Context, userEmail string) bool {
-	claims, ok := middleware.GetClaimsFromContext(ctx)
+	claims, ok := authcontext.GetClaims(ctx)
 	if !ok {
 		return false
 	}

@@ -95,7 +95,7 @@ func (ur *UserPgRepository) Create(ctx context.Context, user models.User) error 
 	_, err = tx.Exec(ctx, `
 		INSERT INTO users (id, email, hashed_password, is_active)
 		VALUES ($1, $2, $3, $4)
-	`, user.ID, user.Email, user.HashedPassword, user.IsActive)
+	`, user.ID, user.Email, user.HashedPassword, true)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
