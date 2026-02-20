@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/danilobml/workstream/internal/workstream-identity/helpers"
+	authcontext "github.com/danilobml/workstream/internal/platform/auth_context"
 	"github.com/danilobml/workstream/internal/platform/jwt"
+	"github.com/danilobml/workstream/internal/workstream-identity/helpers"
 )
 
 type ctxKey string
@@ -30,7 +31,7 @@ func Authenticate(jwtManager *jwt.JwtManager) Middleware {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), claimsCtxKey, claims)
+			ctx := authcontext.WithClaims(r.Context(), claims)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})

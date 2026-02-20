@@ -34,7 +34,7 @@ func WriteErrorsResponse(w http.ResponseWriter, err error) {
 			return
 		}
 		if errors.Is(err, errs.ErrAlreadyExists) {
-			WriteJSONError(w, http.StatusBadRequest, err.Error())
+			WriteJSONError(w, http.StatusConflict, err.Error())
 			return
 		}
 		if errors.Is(err, errs.ErrInvalidCredentials) {

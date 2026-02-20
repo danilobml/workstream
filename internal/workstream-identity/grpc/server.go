@@ -6,6 +6,7 @@ import (
 	"net"
 
 	pb "github.com/danilobml/workstream/internal/gen/identity/v1"
+	"github.com/danilobml/workstream/internal/platform/jwt"
 	"github.com/danilobml/workstream/internal/workstream-identity/services"
 	serviceadapters "github.com/danilobml/workstream/internal/workstream-identity/services/service_adapters"
 	"google.golang.org/grpc"
@@ -22,13 +23,13 @@ func StartGrpcListener(grpcPort string) (net.Listener, error) {
 	return lis, err
 }
 
-func RegisterGrpcServer(identityService services.IdentityService, listener net.Listener,  errCh chan<- error) {
+func RegisterGrpcServer(identityService services.IdentityService, listener net.Listener, jwtManager *jwt.JwtManager, errCh chan<- error) {
 	srv := grpc.NewServer()
 
 	hs := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(srv, hs)
-	
-	pb.RegisterIdentityServiceServer(srv, serviceadapters.NewIdentityGrpcAdapter(identityService))
+
+	pb.RegisterIdentityServiceServer(srv, serviceadapters.NewIdentityGrpcAdapter(identityService, jwtManager))
 
 	hs.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 

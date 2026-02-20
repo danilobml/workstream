@@ -6,9 +6,7 @@ services:
       POSTGRES_DB: workstream_tasks
       POSTGRES_PASSWORD: workstream
       POSTGRES_USER: workstream
-    ports:
-      - "5435:5432"
-    restart: unless-stopped
+      PGDATA: /var/lib/postgresql/data
     volumes:
       - postgres-tasks-data:/var/lib/postgresql/data
     networks:
@@ -25,6 +23,7 @@ services:
       POSTGRES_DB: workstream_identity
       POSTGRES_PASSWORD: workstream
       POSTGRES_USER: workstream
+      PGDATA: /var/lib/postgresql/data
     ports:
       - "5436:5432"
     restart: unless-stopped

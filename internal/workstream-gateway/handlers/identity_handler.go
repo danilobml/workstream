@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/danilobml/workstream/internal/platform/dtos"
+	"github.com/danilobml/workstream/internal/platform/httputils"
 	"github.com/danilobml/workstream/internal/workstream-gateway/services/ports"
 	"github.com/danilobml/workstream/internal/workstream-identity/helpers"
 	"github.com/go-playground/validator/v10"
@@ -80,6 +81,21 @@ func (ih *IdentityHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	helpers.WriteJSONResponse(w, http.StatusOK, resp)
 }
+
+func (ih *IdentityHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
+	auth := r.Header.Get("Authorization")
+	fmt.Println("gateway handler GetAllUsers - auth", auth)
+	ctx := httputils.CtxWithAuth(r.Context(), auth)
+
+	users, err := ih.identityService.ListAllUsers(ctx)
+	if err != nil {
+		helpers.WriteErrorsResponse(w, err)
+		return
+	}
+
+	helpers.WriteJSONResponse(w, http.StatusOK, users)
+}
+
 /* 
 func (ih *IdentityHandler) GetUserData(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -203,18 +219,6 @@ func (ih *IdentityHandler) ResetPassword(w http.ResponseWriter, r *http.Request)
 	}
 
 	helpers.WriteJSONResponse(w, http.StatusNoContent, "")
-}
-
-func (ih *IdentityHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	users, err := ih.identityService.ListAllUsers(ctx)
-	if err != nil {
-		helpers.WriteErrorsResponse(w, err)
-		return
-	}
-
-	helpers.WriteJSONResponse(w, http.StatusOK, users)
 }
 
 func (ih *IdentityHandler) RemoveUser(w http.ResponseWriter, r *http.Request) {

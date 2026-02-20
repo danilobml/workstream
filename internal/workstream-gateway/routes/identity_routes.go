@@ -10,26 +10,26 @@ import (
 func RegisterIdentityRoutes(identityHandler *handlers.IdentityHandler, auth middleware.Middleware) http.Handler {
 	mux := http.NewServeMux()
 
-	// public
+	// public (open)
 	mux.HandleFunc("POST /register", identityHandler.Register)
 	mux.HandleFunc("POST /login", identityHandler.Login)
 
-	protected := http.NewServeMux()
+	// admin (protected)
+	mux.Handle("GET /users", auth(http.HandlerFunc(identityHandler.GetAllUsers)))
 
-	// TODO - add protected routes:
+	// TODO - add routes:
 	/*
+		// public (protected)
 		protected.HandleFunc("POST /request-password", identityHandler.RequestPasswordReset)
 		protected.HandleFunc("PUT /reset-password", identityHandler.ResetPassword)
 		protected.HandleFunc("POST /check-user", identityHandler.CheckUser)
 
+		// admin (protected)
 		protected.HandleFunc("GET /users/data", identityHandler.GetUserData)
 		protected.HandleFunc("DELETE /users/{id}", identityHandler.UnregisterUser)
 		protected.HandleFunc("PUT /users/{id}", identityHandler.UpdateUser)
-		protected.HandleFunc("GET /users", identityHandler.GetAllUsers)
 		protected.HandleFunc("DELETE /users/{id}/remove", identityHandler.RemoveUser)
 	*/
-	
-	mux.Handle("/users/", auth(http.StripPrefix("/users", protected)))
 
 	return mux
 }

@@ -6,6 +6,7 @@ import (
 	pb "github.com/danilobml/workstream/internal/gen/identity/v1"
 	"github.com/danilobml/workstream/internal/platform/dtos"
 	"github.com/danilobml/workstream/internal/platform/grpcutils"
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
 )
 
@@ -41,4 +42,39 @@ func (c *IdentityClient) Login(ctx context.Context, loginReq dtos.LoginRequest) 
 	}
 
 	return loginResp, nil
+}
+
+func (c *IdentityClient) ListAllUsers(ctx context.Context) (dtos.GetAllUsersResponse, error) {
+	resp, err := c.pb.ListAllUsers(ctx, &pb.ListAllUsersRequest{})
+		if err != nil {
+		return dtos.GetAllUsersResponse{}, grpcutils.ParseGrpcError(err)
+	}
+
+	var respUsers []dtos.ResponseUser
+
+	for _, user := range resp.GetUsers() {
+		id, err := uuid.Parse(user.Id)
+		if err != nil {
+			return nil, err
+		}
+
+		user := dtos.ResponseUser{
+			ID: id,
+			Email: user.Email,
+			Roles: getResponseRoles(user.Roles),
+			IsActive: user.IsActive,
+		}
+
+		respUsers = append(respUsers, user)
+	}
+
+	return respUsers, nil
+}
+
+func getResponseRoles(roles []*pb.Role) []string {
+	var roleStrings []string
+	for _, role := range roles {
+		roleStrings = append(roleStrings, role.GetName()) 
+	}
+	return roleStrings
 }

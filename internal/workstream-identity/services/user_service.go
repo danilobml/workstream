@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	pb "github.com/danilobml/workstream/internal/gen/identity/v1"
+	authcontext "github.com/danilobml/workstream/internal/platform/auth_context"
 	"github.com/danilobml/workstream/internal/platform/dtos"
 	"github.com/danilobml/workstream/internal/platform/errs"
 	"github.com/danilobml/workstream/internal/platform/httpx/middleware"
@@ -13,7 +15,6 @@ import (
 	"github.com/danilobml/workstream/internal/workstream-identity/helpers"
 	passwordhasher "github.com/danilobml/workstream/internal/workstream-identity/password_hasher"
 	"github.com/danilobml/workstream/internal/workstream-identity/repositories"
-	pb "github.com/danilobml/workstream/internal/gen/identity/v1"
 
 	"github.com/google/uuid"
 )
@@ -242,8 +243,18 @@ func (us *UserService) UpdateUserData(ctx context.Context, updateUserRequest dto
 
 // Admin only
 func (us *UserService) ListAllUsers(ctx context.Context) (dtos.GetAllUsersResponse, error) {
-	if !us.IsUserAdmin(ctx) {
-		return dtos.GetAllUsersResponse{}, errs.ErrUnauthorized
+	claims, ok := authcontext.GetClaims(ctx)
+	if !ok || claims == nil {
+		log.Println("No claims")
+		return nil, errs.ErrUnauthorized
+	}
+	log.Printf("ListAllUsers claims email=%v roles=%v", claims.Email, claims.Roles)
+
+	isAdmin := us.IsUserAdmin(ctx)
+	log.Printf("ListAllUsers isAdmin=%v", isAdmin)
+
+	if !isAdmin {
+		return nil, errs.ErrUnauthorized
 	}
 
 	users, err := us.userRepository.List(ctx)
@@ -251,20 +262,15 @@ func (us *UserService) ListAllUsers(ctx context.Context) (dtos.GetAllUsersRespon
 		return nil, err
 	}
 
-	if len(users) == 0 {
-		return []dtos.ResponseUser{}, nil
-	}
-
-	var respUsers dtos.GetAllUsersResponse
+	respUsers := make(dtos.GetAllUsersResponse, 0, len(users))
 	for _, user := range users {
 		roleNames := helpers.GetRoleNames(user.Roles)
-		respUser := dtos.ResponseUser{
+		respUsers = append(respUsers, dtos.ResponseUser{
 			ID:       user.ID,
 			Email:    user.Email,
 			Roles:    roleNames,
 			IsActive: user.IsActive,
-		}
-		respUsers = append(respUsers, respUser)
+		})
 	}
 
 	return respUsers, nil

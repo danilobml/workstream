@@ -38,7 +38,7 @@ rebuild: stop
 	docker compose \
 		-f $(COMPOSE_FILE) \
 		--env-file $(ENV_FILE) \
-		up -d --build --force-recreate
+		up --build --force-recreate
 
 gen_tasks:
 	protoc \

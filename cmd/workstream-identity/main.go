@@ -83,7 +83,7 @@ func main() {
 	userService := services.NewUserService(repo, jwtManager, rabbitService, baseRestorePassUrl)
 
 	errCh := make(chan error, 1)
-	go identitygrpc.RegisterGrpcServer(userService, listener, errCh)
+	go identitygrpc.RegisterGrpcServer(userService, listener, jwtManager, errCh)
 	go func() {
 		if err := <-errCh; err != nil {
 			log.Fatal(err)

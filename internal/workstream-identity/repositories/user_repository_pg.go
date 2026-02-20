@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 
 	"github.com/danilobml/workstream/internal/platform/errs"
@@ -23,7 +24,32 @@ func NewUserPgRepository(db db.DBInterface) *UserPgRepository {
 }
 
 func (ur *UserPgRepository) List(ctx context.Context) ([]*models.User, error) {
-	return nil, nil
+	query := `SELECT id, email, is_active
+				FROM users`
+	rows, err := ur.db.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []*models.User
+	for rows.Next() {
+		user := new(models.User)
+		err := rows.Scan(&user.ID, &user.Email, &user.IsActive)
+		if err != nil {
+			return nil, err
+		}
+
+		userRoles, err := ur.getUserRoles(ctx, user.ID)
+		if err != nil {
+			return nil, err
+		}
+		user.Roles = userRoles
+
+		users = append(users, user)
+	}
+
+	return users, nil
 }
 
 func (ur *UserPgRepository) FindById(ctx context.Context, id uuid.UUID) (*models.User, error) {
@@ -71,6 +97,10 @@ func (ur *UserPgRepository) Create(ctx context.Context, user models.User) error 
 		VALUES ($1, $2, $3, $4)
 	`, user.ID, user.Email, user.HashedPassword, user.IsActive)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return errs.ErrAlreadyExists
+		}
 		return err
 	}
 

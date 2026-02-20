@@ -2,30 +2,36 @@ package serviceadapters
 
 import (
 	"context"
+	"fmt"
 
 	pb "github.com/danilobml/workstream/internal/gen/identity/v1"
 	"github.com/danilobml/workstream/internal/platform/dtos"
+	"github.com/danilobml/workstream/internal/platform/grpcutils"
+	"github.com/danilobml/workstream/internal/platform/jwt"
+	"github.com/danilobml/workstream/internal/workstream-identity/middleware"
 	"github.com/danilobml/workstream/internal/workstream-identity/services"
 )
 
 type IdentityGrpcAdapter struct {
 	pb.UnimplementedIdentityServiceServer
-	svc services.IdentityService
+	svc        services.IdentityService
+	jwtManager *jwt.JwtManager
 }
 
-func NewIdentityGrpcAdapter(svc services.IdentityService) *IdentityGrpcAdapter {
-	return &IdentityGrpcAdapter{svc: svc}
+func NewIdentityGrpcAdapter(svc services.IdentityService, jwtManager *jwt.JwtManager) *IdentityGrpcAdapter {
+	return &IdentityGrpcAdapter{svc: svc, jwtManager: jwtManager}
 }
 
 func (a *IdentityGrpcAdapter) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
 	out, err := a.svc.Register(ctx, dtos.RegisterRequest{
 		Email:    req.GetEmail(),
 		Password: req.GetPassword(),
-		Roles: req.GetRoles(),
+		Roles:    req.GetRoles(),
 	})
 	if err != nil {
-		return nil, err
+		return nil, grpcutils.ParseCustomError(err)
 	}
+
 	return &pb.RegisterResponse{Token: out.Token}, nil
 }
 
@@ -35,7 +41,44 @@ func (a *IdentityGrpcAdapter) Login(ctx context.Context, req *pb.LoginRequest) (
 		Password: req.GetPassword(),
 	})
 	if err != nil {
-		return nil, err
+		return nil, grpcutils.ParseCustomError(err)
 	}
+
 	return &pb.LoginResponse{Token: out.Token}, nil
+}
+
+func (a *IdentityGrpcAdapter) ListAllUsers(ctx context.Context, req *pb.ListAllUsersRequest) (*pb.UserListResponse, error) {
+	ctx, err := middleware.AuthenticateGRPC(ctx, a.jwtManager)
+	fmt.Println("identity identity service - ctx", ctx)
+
+	out, err := a.svc.ListAllUsers(ctx)
+	if err != nil {
+		return nil, grpcutils.ParseCustomError(err)
+	}
+
+	var responseUsers []*pb.User
+	for _, user := range out {
+
+		roles := convertRoles(user.Roles)
+		respUser := &pb.User{
+			Id:    user.ID.String(),
+			Email: user.Email,
+			Roles: roles,
+		}
+
+		responseUsers = append(responseUsers, respUser)
+	}
+
+	return &pb.UserListResponse{Users: responseUsers}, nil
+}
+
+func convertRoles(roles []string) []*pb.Role {
+	var responseRoles []*pb.Role
+	for _, role := range roles {
+		respRole := &pb.Role{
+			Name: role,
+		}
+		responseRoles = append(responseRoles, respRole)
+	}
+	return responseRoles
 }

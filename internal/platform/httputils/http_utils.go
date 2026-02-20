@@ -1,9 +1,12 @@
 package httputils
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"google.golang.org/grpc/metadata"
 )
 
 func WriteJson[T any](w http.ResponseWriter, status int, data T) error {
@@ -14,3 +17,10 @@ func WriteJson[T any](w http.ResponseWriter, status int, data T) error {
     }
     return nil
 }
+
+// Forwards auth - authorization should be: "Bearer <token>"
+func CtxWithAuth(ctx context.Context, authorization string) context.Context {
+    md := metadata.Pairs("authorization", authorization)
+    return metadata.NewOutgoingContext(ctx, md)
+}
+
