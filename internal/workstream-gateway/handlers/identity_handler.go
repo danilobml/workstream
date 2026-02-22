@@ -11,7 +11,7 @@ import (
 	"github.com/danilobml/workstream/internal/workstream-gateway/services/ports"
 	"github.com/danilobml/workstream/internal/workstream-identity/helpers"
 	"github.com/go-playground/validator/v10"
-	// "github.com/google/uuid"
+	"github.com/google/uuid"
 )
 
 type IdentityHandler struct {
@@ -84,7 +84,6 @@ func (ih *IdentityHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 func (ih *IdentityHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	auth := r.Header.Get("Authorization")
-	fmt.Println("gateway handler GetAllUsers - auth", auth)
 	ctx := httputils.CtxWithAuth(r.Context(), auth)
 
 	users, err := ih.identityService.ListAllUsers(ctx)
@@ -94,6 +93,25 @@ func (ih *IdentityHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	helpers.WriteJSONResponse(w, http.StatusOK, users)
+}
+
+func (ih *IdentityHandler) UnregisterUser(w http.ResponseWriter, r *http.Request) {
+	auth := r.Header.Get("Authorization")
+	ctx := httputils.CtxWithAuth(r.Context(), auth)
+
+	userId, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		helpers.WriteJSONError(w, http.StatusBadRequest, "no valid user id supplied")
+		return
+	}
+
+	err = ih.identityService.Unregister(ctx, dtos.UnregisterRequest{Id: userId})
+	if err != nil {
+		helpers.WriteErrorsResponse(w, err)
+		return
+	}
+
+	helpers.WriteJSONResponse(w, http.StatusOK, "unregistered")
 }
 
 /* 
@@ -141,30 +159,6 @@ func (ih *IdentityHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	helpers.WriteJSONResponse(w, http.StatusOK, "updated successfully")
-}
-
-func (ih *IdentityHandler) UnregisterUser(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	userId, err := uuid.Parse(r.PathValue("id"))
-	if err != nil {
-		helpers.WriteJSONError(w, http.StatusBadRequest, "no valid user id supplied")
-		return
-	}
-
-	user, err := ih.identityService.GetUser(ctx, userId)
-	if err != nil {
-		helpers.WriteErrorsResponse(w, err)
-		return
-	}
-
-	err = ih.identityService.Unregister(ctx, dtos.UnregisterRequest{Email: user.Email})
-	if err != nil {
-		helpers.WriteErrorsResponse(w, err)
-		return
-	}
-
-	helpers.WriteJSONResponse(w, http.StatusNoContent, "unregistered")
 }
 
 func (ih *IdentityHandler) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {

@@ -16,6 +16,7 @@ func RegisterIdentityRoutes(identityHandler *handlers.IdentityHandler, auth midd
 
 	// admin (protected)
 	mux.Handle("GET /users", auth(http.HandlerFunc(identityHandler.GetAllUsers)))
+	mux.Handle("DELETE /users/{id}", auth(http.HandlerFunc(identityHandler.UnregisterUser)))
 
 	// TODO - add routes:
 	/*
@@ -26,7 +27,6 @@ func RegisterIdentityRoutes(identityHandler *handlers.IdentityHandler, auth midd
 
 		// admin (protected)
 		protected.HandleFunc("GET /users/data", identityHandler.GetUserData)
-		protected.HandleFunc("DELETE /users/{id}", identityHandler.UnregisterUser)
 		protected.HandleFunc("PUT /users/{id}", identityHandler.UpdateUser)
 		protected.HandleFunc("DELETE /users/{id}/remove", identityHandler.RemoveUser)
 	*/

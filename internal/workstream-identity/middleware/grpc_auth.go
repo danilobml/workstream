@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	authcontext "github.com/danilobml/workstream/internal/platform/auth_context"
@@ -36,8 +35,6 @@ func AuthenticateGRPC(ctx context.Context, jwtManager *jwt.JwtManager) (context.
 	if err != nil {
 		return ctx, err
 	}
-	fmt.Println("identity middleware - claims", claims)
-
 
 	return authcontext.WithClaims(ctx, claims), nil
 }

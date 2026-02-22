@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	IdentityService_Register_FullMethodName     = "/IdentityService/Register"
 	IdentityService_Login_FullMethodName        = "/IdentityService/Login"
+	IdentityService_Unregister_FullMethodName   = "/IdentityService/Unregister"
 	IdentityService_ListAllUsers_FullMethodName = "/IdentityService/ListAllUsers"
 )
 
@@ -28,9 +29,11 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type IdentityServiceClient interface {
-	// public
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	Unregister(ctx context.Context, in *UnregisterRequest, opts ...grpc.CallOption) (*UnregisterResponse, error)
+	// rpc RequestPasswordReset(RequestPasswordResetRequest) returns (RequestPasswordResetResponse);
+	// rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
 	// admin
 	ListAllUsers(ctx context.Context, in *ListAllUsersRequest, opts ...grpc.CallOption) (*UserListResponse, error)
 }
@@ -63,6 +66,16 @@ func (c *identityServiceClient) Login(ctx context.Context, in *LoginRequest, opt
 	return out, nil
 }
 
+func (c *identityServiceClient) Unregister(ctx context.Context, in *UnregisterRequest, opts ...grpc.CallOption) (*UnregisterResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UnregisterResponse)
+	err := c.cc.Invoke(ctx, IdentityService_Unregister_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *identityServiceClient) ListAllUsers(ctx context.Context, in *ListAllUsersRequest, opts ...grpc.CallOption) (*UserListResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UserListResponse)
@@ -77,9 +90,11 @@ func (c *identityServiceClient) ListAllUsers(ctx context.Context, in *ListAllUse
 // All implementations must embed UnimplementedIdentityServiceServer
 // for forward compatibility.
 type IdentityServiceServer interface {
-	// public
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
+	Unregister(context.Context, *UnregisterRequest) (*UnregisterResponse, error)
+	// rpc RequestPasswordReset(RequestPasswordResetRequest) returns (RequestPasswordResetResponse);
+	// rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
 	// admin
 	ListAllUsers(context.Context, *ListAllUsersRequest) (*UserListResponse, error)
 	mustEmbedUnimplementedIdentityServiceServer()
@@ -97,6 +112,9 @@ func (UnimplementedIdentityServiceServer) Register(context.Context, *RegisterReq
 }
 func (UnimplementedIdentityServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Login not implemented")
+}
+func (UnimplementedIdentityServiceServer) Unregister(context.Context, *UnregisterRequest) (*UnregisterResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Unregister not implemented")
 }
 func (UnimplementedIdentityServiceServer) ListAllUsers(context.Context, *ListAllUsersRequest) (*UserListResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListAllUsers not implemented")
@@ -158,6 +176,24 @@ func _IdentityService_Login_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_Unregister_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnregisterRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).Unregister(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_Unregister_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).Unregister(ctx, req.(*UnregisterRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IdentityService_ListAllUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListAllUsersRequest)
 	if err := dec(in); err != nil {
@@ -190,6 +226,10 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Login",
 			Handler:    _IdentityService_Login_Handler,
+		},
+		{
+			MethodName: "Unregister",
+			Handler:    _IdentityService_Unregister_Handler,
 		},
 		{
 			MethodName: "ListAllUsers",

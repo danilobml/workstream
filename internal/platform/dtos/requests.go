@@ -16,11 +16,11 @@ type LoginRequest struct {
 }
 
 type UnregisterRequest struct {
-	Email string `json:"email" validate:"required,email"`
+	Id uuid.UUID `json:"id" validate:"required"`
 }
 
 type CheckUserRequest struct {
-	Token  string `json:"token" validate:"required"`
+	Token string `json:"token" validate:"required"`
 }
 
 type UpdateUserRequest struct {

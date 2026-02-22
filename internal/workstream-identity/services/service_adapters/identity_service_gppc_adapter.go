@@ -2,7 +2,6 @@ package serviceadapters
 
 import (
 	"context"
-	"fmt"
 
 	pb "github.com/danilobml/workstream/internal/gen/identity/v1"
 	"github.com/danilobml/workstream/internal/platform/dtos"
@@ -10,6 +9,7 @@ import (
 	"github.com/danilobml/workstream/internal/platform/jwt"
 	"github.com/danilobml/workstream/internal/workstream-identity/middleware"
 	"github.com/danilobml/workstream/internal/workstream-identity/services"
+	"github.com/google/uuid"
 )
 
 type IdentityGrpcAdapter struct {
@@ -49,7 +49,9 @@ func (a *IdentityGrpcAdapter) Login(ctx context.Context, req *pb.LoginRequest) (
 
 func (a *IdentityGrpcAdapter) ListAllUsers(ctx context.Context, req *pb.ListAllUsersRequest) (*pb.UserListResponse, error) {
 	ctx, err := middleware.AuthenticateGRPC(ctx, a.jwtManager)
-	fmt.Println("identity identity service - ctx", ctx)
+	if err != nil {
+		return nil, grpcutils.ParseCustomError(err)
+	}
 
 	out, err := a.svc.ListAllUsers(ctx)
 	if err != nil {
@@ -61,9 +63,9 @@ func (a *IdentityGrpcAdapter) ListAllUsers(ctx context.Context, req *pb.ListAllU
 
 		roles := convertRoles(user.Roles)
 		respUser := &pb.User{
-			Id:    user.ID.String(),
-			Email: user.Email,
-			Roles: roles,
+			Id:       user.ID.String(),
+			Email:    user.Email,
+			Roles:    roles,
 			IsActive: user.IsActive,
 		}
 
@@ -71,6 +73,25 @@ func (a *IdentityGrpcAdapter) ListAllUsers(ctx context.Context, req *pb.ListAllU
 	}
 
 	return &pb.UserListResponse{Users: responseUsers}, nil
+}
+
+func (a *IdentityGrpcAdapter) Unregister(ctx context.Context, req *pb.UnregisterRequest) (*pb.UnregisterResponse, error) {
+	ctx, err := middleware.AuthenticateGRPC(ctx, a.jwtManager)
+	if err != nil {
+		return nil, grpcutils.ParseCustomError(err)
+	}
+
+	parsedId, err := uuid.Parse(req.Id)
+	if err != nil {
+		return nil, grpcutils.ParseCustomError(err)
+	}
+
+	err = a.svc.Unregister(ctx, dtos.UnregisterRequest{Id: parsedId})
+	if err != nil {
+		return nil, grpcutils.ParseCustomError(err)
+	}
+
+	return &pb.UnregisterResponse{}, nil
 }
 
 func convertRoles(roles []string) []*pb.Role {

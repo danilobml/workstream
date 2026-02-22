@@ -71,6 +71,15 @@ func (c *IdentityClient) ListAllUsers(ctx context.Context) (dtos.GetAllUsersResp
 	return respUsers, nil
 }
 
+func (c *IdentityClient) Unregister(ctx context.Context, unregisterRequest dtos.UnregisterRequest) error {
+	_, err := c.pb.Unregister(ctx, &pb.UnregisterRequest{Id: unregisterRequest.Id.String()})
+	if err != nil {
+		return grpcutils.ParseGrpcError(err)
+	}
+
+	return nil
+}
+
 func getResponseRoles(roles []*pb.Role) []string {
 	var roleStrings []string
 	for _, role := range roles {

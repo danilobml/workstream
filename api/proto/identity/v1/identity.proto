@@ -3,16 +3,14 @@ syntax = "proto3";
 option go_package = "github.com/danilobml/workstream/internal/gen/identity/v1";
 
 service IdentityService {
-	// public
     rpc Register(RegisterRequest) returns (RegisterResponse);
 	rpc Login(LoginRequest) returns (LoginResponse);
-	/* 
 	rpc Unregister(UnregisterRequest) returns (UnregisterResponse);
-	rpc RequestPasswordReset(RequestPasswordResetRequest) returns (RequestPasswordResetResponse);
-	rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse) */;
-
+	// rpc RequestPasswordReset(RequestPasswordResetRequest) returns (RequestPasswordResetResponse);
+	// rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
 	// admin
 	rpc ListAllUsers(ListAllUsersRequest) returns (UserListResponse);
+	// TODO - Implement the RPCs below as needed:
 	/* rpc GetUserData(GetUserDataRequest) returns (SingleUserResponse);
 	rpc UpdateUserData(UpdateUserRequest) returns (UpdateUserResponse);
 	rpc RemoveUser(RemoveUserRequest) returns (RemoveUserResponse); 
@@ -39,19 +37,25 @@ message LoginResponse {
     string token = 1;
 };
 
+message UnregisterRequest {
+	string id = 1;
+};
+
+message UnregisterResponse {};
+
 message Role {
 	string name = 1;
-}
+};
 
 message User {
 	string id = 1;
 	string email = 2;
 	repeated Role roles = 3;
 	bool is_active = 4;
-}
+};
 
 message ListAllUsersRequest {};
 
 message UserListResponse {
 	repeated User users = 1;
-}
+};

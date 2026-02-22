@@ -123,7 +123,7 @@ func (us *UserService) GetUserData(ctx context.Context) (dtos.ResponseUser, erro
 }
 
 func (us *UserService) Unregister(ctx context.Context, unregisterRequest dtos.UnregisterRequest) error {
-	user, err := us.userRepository.FindByEmail(ctx, unregisterRequest.Email)
+	user, err := us.userRepository.FindById(ctx, unregisterRequest.Id)
 	if err != nil {
 		return err
 	}
@@ -244,14 +244,10 @@ func (us *UserService) UpdateUserData(ctx context.Context, updateUserRequest dto
 func (us *UserService) ListAllUsers(ctx context.Context) (dtos.GetAllUsersResponse, error) {
 	claims, ok := authcontext.GetClaims(ctx)
 	if !ok || claims == nil {
-		log.Println("No claims")
 		return nil, errs.ErrUnauthorized
 	}
-	log.Printf("ListAllUsers claims email=%v roles=%v", claims.Email, claims.Roles)
 
 	isAdmin := us.IsUserAdmin(ctx)
-	log.Printf("ListAllUsers isAdmin=%v", isAdmin)
-
 	if !isAdmin {
 		return nil, errs.ErrUnauthorized
 	}
