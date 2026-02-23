@@ -80,6 +80,15 @@ func (c *IdentityClient) Unregister(ctx context.Context, unregisterRequest dtos.
 	return nil
 }
 
+func (c *IdentityClient) RemoveUser(ctx context.Context, req dtos.RemoveUserRequest) error {
+	_, err := c.pb.RemoveUser(ctx, &pb.RemoveUserRequest{Id: req.Id.String()})
+	if err != nil {
+		return grpcutils.ParseGrpcError(err)
+	}
+
+	return nil
+}
+
 func getResponseRoles(roles []*pb.Role) []string {
 	var roleStrings []string
 	for _, role := range roles {

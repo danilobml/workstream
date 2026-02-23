@@ -272,13 +272,17 @@ func (us *UserService) ListAllUsers(ctx context.Context) (dtos.GetAllUsersRespon
 }
 
 // Admin only
-func (us *UserService) RemoveUser(ctx context.Context, id uuid.UUID) error {
+func (us *UserService) RemoveUser(ctx context.Context, req dtos.RemoveUserRequest) error {
+	claims, ok := authcontext.GetClaims(ctx)
+	if !ok || claims == nil {
+		return errs.ErrUnauthorized
+	}
 	// Only admins can remove (delete from DB) an user
 	if !us.IsUserAdmin(ctx) {
 		return errs.ErrUnauthorized
 	}
 
-	err := us.userRepository.Delete(ctx, id)
+	err := us.userRepository.Delete(ctx, req.Id)
 	if err != nil {
 		return err
 	}

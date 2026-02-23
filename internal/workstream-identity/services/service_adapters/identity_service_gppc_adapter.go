@@ -94,6 +94,25 @@ func (a *IdentityGrpcAdapter) Unregister(ctx context.Context, req *pb.Unregister
 	return &pb.UnregisterResponse{}, nil
 }
 
+func (a *IdentityGrpcAdapter) RemoveUser(ctx context.Context, req *pb.RemoveUserRequest) (*pb.RemoveUserResponse, error) {
+	ctx, err := middleware.AuthenticateGRPC(ctx, a.jwtManager)
+	if err != nil {
+		return nil, grpcutils.ParseCustomError(err)
+	}
+
+	parsedId, err := uuid.Parse(req.Id)
+	if err != nil {
+		return nil, grpcutils.ParseCustomError(err)
+	}
+
+	err = a.svc.RemoveUser(ctx, dtos.RemoveUserRequest{Id: parsedId})
+	if err != nil {
+		return nil, grpcutils.ParseCustomError(err)
+	}
+
+	return &pb.RemoveUserResponse{}, nil
+}
+
 func convertRoles(roles []string) []*pb.Role {
 	var responseRoles []*pb.Role
 	for _, role := range roles {

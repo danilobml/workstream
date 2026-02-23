@@ -19,6 +19,10 @@ type UnregisterRequest struct {
 	Id uuid.UUID `json:"id" validate:"required"`
 }
 
+type RemoveUserRequest struct {
+	Id uuid.UUID `json:"id" validate:"required"`
+}
+
 type CheckUserRequest struct {
 	Token string `json:"token" validate:"required"`
 }

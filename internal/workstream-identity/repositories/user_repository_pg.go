@@ -184,6 +184,17 @@ func (ur *UserPgRepository) Update(ctx context.Context, user models.User) error 
 }
 
 func (ur *UserPgRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	ct, err := ur.db.Exec(ctx, `
+		DELETE FROM users
+		WHERE id = $1
+	`, id)
+	if err != nil {
+		return err
+	}
+
+	if ct.RowsAffected() == 0 {
+		return errs.ErrNotFound
+	}
 
 	return nil
 }

@@ -111,7 +111,27 @@ func (ih *IdentityHandler) UnregisterUser(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	helpers.WriteJSONResponse(w, http.StatusOK, "unregistered")
+	helpers.WriteJSONResponse(w, http.StatusNoContent, "unregistered")
+}
+
+func (ih *IdentityHandler) RemoveUser(w http.ResponseWriter, r *http.Request) {
+	auth := r.Header.Get("Authorization")
+	ctx := httputils.CtxWithAuth(r.Context(), auth)
+
+	idString := r.PathValue("id")
+	userId, err := uuid.Parse(idString)
+	if err != nil {
+		helpers.WriteJSONError(w, http.StatusBadRequest, "no valid user id supplied")
+		return
+	}
+
+	err = ih.identityService.RemoveUser(ctx, dtos.RemoveUserRequest{Id: userId})
+	if err != nil {
+		helpers.WriteErrorsResponse(w, err)
+		return
+	}
+
+	helpers.WriteJSONResponse(w, http.StatusNoContent, "removed")
 }
 
 /* 
@@ -213,25 +233,6 @@ func (ih *IdentityHandler) ResetPassword(w http.ResponseWriter, r *http.Request)
 	}
 
 	helpers.WriteJSONResponse(w, http.StatusNoContent, "")
-}
-
-func (ih *IdentityHandler) RemoveUser(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	idString := r.PathValue("id")
-	userId, err := uuid.Parse(idString)
-	if err != nil {
-		helpers.WriteJSONError(w, http.StatusBadRequest, "no valid user id supplied")
-		return
-	}
-
-	err = ih.identityService.RemoveUser(ctx, userId)
-	if err != nil {
-		helpers.WriteErrorsResponse(w, err)
-		return
-	}
-
-	helpers.WriteJSONResponse(w, http.StatusNoContent, "removed")
 }
 
 func (ih *IdentityHandler) CheckUser(w http.ResponseWriter, r *http.Request) {

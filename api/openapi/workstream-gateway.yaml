@@ -222,7 +222,27 @@ paths:
               example:
                 token: eyJhbGciOi...
 
+  /identity/users/{id}/unregister:
+    patch:
+      operationId: unregisterUser
+      summary: Unregister user
+      tags: [identity]
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: user unregistered
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden
+
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     Task:
       type: object
