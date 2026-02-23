@@ -227,6 +227,13 @@ paths:
       operationId: unregisterUser
       summary: Unregister user
       tags: [identity]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       security:
         - BearerAuth: []
       responses:
