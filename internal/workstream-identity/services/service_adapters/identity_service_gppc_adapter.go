@@ -113,6 +113,15 @@ func (a *IdentityGrpcAdapter) RemoveUser(ctx context.Context, req *pb.RemoveUser
 	return &pb.RemoveUserResponse{}, nil
 }
 
+func (a *IdentityGrpcAdapter) RequestPasswordReset(ctx context.Context, req *pb.RequestPasswordResetRequest) (*pb.RequestPasswordResetResponse, error) {
+	err := a.svc.RequestPasswordReset(ctx, dtos.RequestPasswordResetRequest{Email: req.GetEmail()})
+	if err != nil {
+		return nil, grpcutils.ParseCustomError(err)
+	}
+
+	return &pb.RequestPasswordResetResponse{}, nil
+}
+
 func convertRoles(roles []string) []*pb.Role {
 	var responseRoles []*pb.Role
 	for _, role := range roles {

@@ -6,7 +6,7 @@ service IdentityService {
     rpc Register(RegisterRequest) returns (RegisterResponse);
 	rpc Login(LoginRequest) returns (LoginResponse);
 	rpc Unregister(UnregisterRequest) returns (UnregisterResponse);
-	// rpc RequestPasswordReset(RequestPasswordResetRequest) returns (RequestPasswordResetResponse);
+	rpc RequestPasswordReset(RequestPasswordResetRequest) returns (RequestPasswordResetResponse);
 	// rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
 	// admin
 	rpc ListAllUsers(ListAllUsersRequest) returns (UserListResponse);
@@ -48,6 +48,12 @@ message RemoveUserRequest {
 };
 
 message RemoveUserResponse {};
+
+message RequestPasswordResetRequest {
+	string email = 1;
+};
+
+message RequestPasswordResetResponse {};
 
 message Role {
 	string name = 1;

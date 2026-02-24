@@ -12,8 +12,8 @@ type IdentityServicePort interface {
 	ListAllUsers(ctx context.Context) (dtos.GetAllUsersResponse, error)
 	Unregister(ctx context.Context, unregisterRequest dtos.UnregisterRequest) error
 	RemoveUser(ctx context.Context, req dtos.RemoveUserRequest) error
+	RequestPasswordReset(ctx context.Context, req dtos.RequestPasswordResetRequest) error
 	/* 	GetUserData(ctx context.Context) (dtos.ResponseUser, error)
-	RequestPasswordReset(ctx context.Context, requestPassResetReq dtos.RequestPasswordResetRequest) error
 	ResetPassword(ctx context.Context, resetPassRequest dtos.ResetPasswordRequest) error
 	UpdateUserData(ctx context.Context, updateUserRequest dtos.UpdateUserRequest) error
 	CheckUser(ctx context.Context, checkUserReq dtos.CheckUserRequest) (dtos.CheckUserResponse, error) */

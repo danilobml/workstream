@@ -19,11 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	IdentityService_Register_FullMethodName     = "/IdentityService/Register"
-	IdentityService_Login_FullMethodName        = "/IdentityService/Login"
-	IdentityService_Unregister_FullMethodName   = "/IdentityService/Unregister"
-	IdentityService_ListAllUsers_FullMethodName = "/IdentityService/ListAllUsers"
-	IdentityService_RemoveUser_FullMethodName   = "/IdentityService/RemoveUser"
+	IdentityService_Register_FullMethodName             = "/IdentityService/Register"
+	IdentityService_Login_FullMethodName                = "/IdentityService/Login"
+	IdentityService_Unregister_FullMethodName           = "/IdentityService/Unregister"
+	IdentityService_RequestPasswordReset_FullMethodName = "/IdentityService/RequestPasswordReset"
+	IdentityService_ListAllUsers_FullMethodName         = "/IdentityService/ListAllUsers"
+	IdentityService_RemoveUser_FullMethodName           = "/IdentityService/RemoveUser"
 )
 
 // IdentityServiceClient is the client API for IdentityService service.
@@ -33,7 +34,7 @@ type IdentityServiceClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	Unregister(ctx context.Context, in *UnregisterRequest, opts ...grpc.CallOption) (*UnregisterResponse, error)
-	// rpc RequestPasswordReset(RequestPasswordResetRequest) returns (RequestPasswordResetResponse);
+	RequestPasswordReset(ctx context.Context, in *RequestPasswordResetRequest, opts ...grpc.CallOption) (*RequestPasswordResetResponse, error)
 	// rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
 	// admin
 	ListAllUsers(ctx context.Context, in *ListAllUsersRequest, opts ...grpc.CallOption) (*UserListResponse, error)
@@ -78,6 +79,16 @@ func (c *identityServiceClient) Unregister(ctx context.Context, in *UnregisterRe
 	return out, nil
 }
 
+func (c *identityServiceClient) RequestPasswordReset(ctx context.Context, in *RequestPasswordResetRequest, opts ...grpc.CallOption) (*RequestPasswordResetResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RequestPasswordResetResponse)
+	err := c.cc.Invoke(ctx, IdentityService_RequestPasswordReset_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *identityServiceClient) ListAllUsers(ctx context.Context, in *ListAllUsersRequest, opts ...grpc.CallOption) (*UserListResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UserListResponse)
@@ -105,7 +116,7 @@ type IdentityServiceServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	Unregister(context.Context, *UnregisterRequest) (*UnregisterResponse, error)
-	// rpc RequestPasswordReset(RequestPasswordResetRequest) returns (RequestPasswordResetResponse);
+	RequestPasswordReset(context.Context, *RequestPasswordResetRequest) (*RequestPasswordResetResponse, error)
 	// rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
 	// admin
 	ListAllUsers(context.Context, *ListAllUsersRequest) (*UserListResponse, error)
@@ -128,6 +139,9 @@ func (UnimplementedIdentityServiceServer) Login(context.Context, *LoginRequest) 
 }
 func (UnimplementedIdentityServiceServer) Unregister(context.Context, *UnregisterRequest) (*UnregisterResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Unregister not implemented")
+}
+func (UnimplementedIdentityServiceServer) RequestPasswordReset(context.Context, *RequestPasswordResetRequest) (*RequestPasswordResetResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RequestPasswordReset not implemented")
 }
 func (UnimplementedIdentityServiceServer) ListAllUsers(context.Context, *ListAllUsersRequest) (*UserListResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListAllUsers not implemented")
@@ -210,6 +224,24 @@ func _IdentityService_Unregister_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_RequestPasswordReset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestPasswordResetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).RequestPasswordReset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_RequestPasswordReset_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).RequestPasswordReset(ctx, req.(*RequestPasswordResetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IdentityService_ListAllUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListAllUsersRequest)
 	if err := dec(in); err != nil {
@@ -264,6 +296,10 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Unregister",
 			Handler:    _IdentityService_Unregister_Handler,
+		},
+		{
+			MethodName: "RequestPasswordReset",
+			Handler:    _IdentityService_RequestPasswordReset_Handler,
 		},
 		{
 			MethodName: "ListAllUsers",

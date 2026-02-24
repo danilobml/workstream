@@ -39,11 +39,11 @@ func (rs *RabbitProducerService) Publish(ctx context.Context, event models.Event
 	routingKey := event.EventType
 
 	err = rs.client.Channel.PublishWithContext(
-		ctx,               // context
-		rabbitmq.NotificationsExchange, // exchange
-		routingKey,        // routing key
-		false,             // mandatory
-		false,             // immediate
+		ctx,                     // context
+		rabbitmq.MailerExchange, // exchange
+		routingKey,              // routing key
+		false,                   // mandatory
+		false,                   // immediate
 		amqp.Publishing{
 			ContentType:  "application/json",
 			DeliveryMode: amqp.Persistent,
@@ -58,7 +58,6 @@ func (rs *RabbitProducerService) Publish(ctx context.Context, event models.Event
 
 	return nil
 }
-
 
 func (ns *RabbitProducerService) SendMailMessage(ctx context.Context, user models.User, subject, body string) error {
 	mailInput := models.MailInput{
@@ -75,7 +74,7 @@ func (ns *RabbitProducerService) SendMailMessage(ctx context.Context, user model
 		EventID:    uuid.NewString(),
 		EventType:  "workstream.mail.sent.v1",
 		OccurredAt: time.Now(),
-		Producer:   "workstream-notifications",
+		Producer:   "workstream-identity",
 		TraceID:    uuid.NewString(),
 		Payload:    json.RawMessage(payloadBytes),
 	}

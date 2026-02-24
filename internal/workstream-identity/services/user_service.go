@@ -149,11 +149,11 @@ func (us *UserService) Unregister(ctx context.Context, unregisterRequest dtos.Un
 	return nil
 }
 
-func (us *UserService) RequestPasswordReset(ctx context.Context, requestPassResetReq dtos.RequestPasswordResetRequest) error {
-	user, err := us.userRepository.FindByEmail(ctx, requestPassResetReq.Email)
+func (us *UserService) RequestPasswordReset(ctx context.Context, passResetReq dtos.RequestPasswordResetRequest) error {
+	user, err := us.userRepository.FindByEmail(ctx, passResetReq.Email)
 	if err != nil || user == nil {
 		log.Println("Error sending email: ", err)
-		return nil
+		return err
 	}
 
 	token, err := us.jwtManager.CreateResetToken(user.ID.String())
@@ -163,8 +163,8 @@ func (us *UserService) RequestPasswordReset(ctx context.Context, requestPassRese
 	}
 
 	link := fmt.Sprintf("%s/change-password?token=%s", us.baseUrl, token)
-	subject := "Password Reset Request"
-	body := fmt.Sprintf("Click the link below to reset your password:\r\n\r\n%s\r\n\r\nThis link expires in 15 minutes.", link)
+	subject := "Workstream - Password Reset Request"
+	body := fmt.Sprintf("Workstream - password reset:\r\n\r\nYou requested a password change. Click the link below to proceed:\r\n\r\n%s\r\n\r\nThis link expires in 15 minutes.\r\n\r\nBest regards,\r\n\r\nYour Workstream platform team.", link)
 
 	if err := us.messageService.SendMailMessage(ctx, *user, subject, body); err != nil {
 		log.Println("Error sending email: ", err)

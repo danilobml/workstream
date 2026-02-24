@@ -29,8 +29,6 @@ func NewIdentityHandler(identityService ports.IdentityServicePort, apiKey string
 func (ih *IdentityHandler) Register(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
-
 	registerReq := dtos.RegisterRequest{}
 	err := json.NewDecoder(r.Body).Decode(&registerReq)
 	if err != nil {
@@ -56,8 +54,6 @@ func (ih *IdentityHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 func (ih *IdentityHandler) Login(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
-	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 
 	loginReq := dtos.LoginRequest{}
 	err := json.NewDecoder(r.Body).Decode(&loginReq)
@@ -134,6 +130,31 @@ func (ih *IdentityHandler) RemoveUser(w http.ResponseWriter, r *http.Request) {
 	helpers.WriteJSONResponse(w, http.StatusNoContent, "removed")
 }
 
+func (ih *IdentityHandler) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	requestPassResetReq := dtos.RequestPasswordResetRequest{}
+	err := json.NewDecoder(r.Body).Decode(&requestPassResetReq)
+	if err != nil {
+		helpers.WriteJSONError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	if !ih.isInputValid(w, requestPassResetReq) {
+		return
+	}
+
+	requestPassResetReq.Email = strings.TrimSpace(requestPassResetReq.Email)
+
+	err = ih.identityService.RequestPasswordReset(ctx, requestPassResetReq)
+	if err != nil {
+		helpers.WriteErrorsResponse(w, err)
+		return
+	}
+
+	helpers.WriteJSONResponse(w, http.StatusNoContent, "")
+}
+
 /* 
 func (ih *IdentityHandler) GetUserData(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -155,8 +176,6 @@ func (ih *IdentityHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		helpers.WriteJSONError(w, http.StatusBadRequest, "no valid user id supplied")
 		return
 	}
-
-	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 
 	updateReq := dtos.UpdateUserRequest{}
 	err = json.NewDecoder(r.Body).Decode(&updateReq)
@@ -181,35 +200,8 @@ func (ih *IdentityHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	helpers.WriteJSONResponse(w, http.StatusOK, "updated successfully")
 }
 
-func (ih *IdentityHandler) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
-
-	requestPassResetReq := dtos.RequestPasswordResetRequest{}
-	err := json.NewDecoder(r.Body).Decode(&requestPassResetReq)
-	if err != nil {
-		helpers.WriteJSONError(w, http.StatusBadRequest, "Invalid JSON")
-		return
-	}
-
-	if !ih.isInputValid(w, requestPassResetReq) {
-		return
-	}
-
-	requestPassResetReq.Email = strings.TrimSpace(requestPassResetReq.Email)
-
-	err = ih.identityService.RequestPasswordReset(ctx, requestPassResetReq)
-	if err != nil {
-		helpers.WriteErrorsResponse(w, err)
-		return
-	}
-
-	helpers.WriteJSONResponse(w, http.StatusNoContent, "")
-}
-
 func (ih *IdentityHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 
 	resetPassReq := dtos.ResetPasswordRequest{}
 	err := json.NewDecoder(r.Body).Decode(&resetPassReq)
@@ -244,8 +236,6 @@ func (ih *IdentityHandler) CheckUser(w http.ResponseWriter, r *http.Request) {
 		helpers.WriteJSONError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-
-	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 
 	checkUserReq := dtos.CheckUserRequest{}
 	err := json.NewDecoder(r.Body).Decode(&checkUserReq)

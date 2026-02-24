@@ -89,6 +89,15 @@ func (c *IdentityClient) RemoveUser(ctx context.Context, req dtos.RemoveUserRequ
 	return nil
 }
 
+func (c *IdentityClient) RequestPasswordReset(ctx context.Context, req dtos.RequestPasswordResetRequest) error {
+		_, err := c.pb.RequestPasswordReset(ctx, &pb.RequestPasswordResetRequest{Email: req.Email})
+	if err != nil {
+		return grpcutils.ParseGrpcError(err)
+	}
+
+	return nil
+}
+
 func getResponseRoles(roles []*pb.Role) []string {
 	var roleStrings []string
 	for _, role := range roles {
