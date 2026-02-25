@@ -41,6 +41,8 @@ func ParseCustomError(err error) error {
 		return status.Error(codes.PermissionDenied, "unauthorized")
 	case errors.Is(err, errs.ErrAlreadyExists):
 		return status.Error(codes.AlreadyExists, "already exists")
+    case errors.Is(err, errs.ErrInvalidToken):
+		return status.Error(codes.PermissionDenied, "invalid token")
 	default:
 		return status.Error(codes.Internal, "internal error")
 	}

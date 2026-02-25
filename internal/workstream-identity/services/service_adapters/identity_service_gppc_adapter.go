@@ -122,6 +122,15 @@ func (a *IdentityGrpcAdapter) RequestPasswordReset(ctx context.Context, req *pb.
 	return &pb.RequestPasswordResetResponse{}, nil
 }
 
+func (a *IdentityGrpcAdapter) ResetPassword(ctx context.Context, req *pb.ResetPasswordRequest) (*pb.ResetPasswordResponse, error) {
+	err := a.svc.ResetPassword(ctx, dtos.ResetPasswordRequest{Password: req.GetPassword(), ResetToken: req.GetResetToken()})
+	if err != nil {
+		return nil, grpcutils.ParseCustomError(err)
+	}
+
+	return &pb.ResetPasswordResponse{}, nil
+}
+
 func convertRoles(roles []string) []*pb.Role {
 	var responseRoles []*pb.Role
 	for _, role := range roles {

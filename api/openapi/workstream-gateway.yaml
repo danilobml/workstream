@@ -244,6 +244,56 @@ paths:
         "403":
           description: forbidden
 
+  identity/request-password:
+      post:
+        operationId: requestPassword
+        summary: Request user password reset
+        tags: [identity]
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - email
+                properties:
+                  email:
+                    type: string
+                    format: email
+              example:
+                email: test2@mail.com
+        responses:
+          "204":
+            description: password reset requested
+
+  identity/reset-password:
+      post:
+        operationId: resetPassword
+        summary: Reset user password
+        tags: [identity]
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - reset_token
+                  - password
+                properties:
+                  reset_token:
+                    type: string
+                  password:
+                    type: string
+                    minLength: 6 
+              example:
+                reset_token: eyJhbGciOi...
+                password: test-pass
+        responses:
+          "204":
+            description: password reset requested
+
 components:
   securitySchemes:
     BearerAuth:

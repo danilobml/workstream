@@ -8,18 +8,13 @@ import (
 )
 
 type IdentityService interface {
-	// public:
 	Register(ctx context.Context, registerReq dtos.RegisterRequest) (dtos.RegisterResponse, error)
 	Login(ctx context.Context, loginReq dtos.LoginRequest) (dtos.LoginResponse, error)
 	Unregister(ctx context.Context, unregisterRequest dtos.UnregisterRequest) error
 	RequestPasswordReset(ctx context.Context, passResetReq dtos.RequestPasswordResetRequest) error
-
-	// admin:
+	ResetPassword(ctx context.Context, resetPassRequest dtos.ResetPasswordRequest) error
 	ListAllUsers(ctx context.Context) (dtos.GetAllUsersResponse, error)
 	RemoveUser(ctx context.Context, req dtos.RemoveUserRequest) error
-	/* 	GetUserData(ctx context.Context) (dtos.ResponseUser, error)
-	ResetPassword(ctx context.Context, resetPassRequest dtos.ResetPasswordRequest) error
-	UpdateUserData(ctx context.Context, updateUserRequest dtos.UpdateUserRequest) error
-	GetUser(ctx context.Context, id uuid.UUID) (*models.User, error)
-	CheckUser(ctx context.Context, checkUserReq dtos.CheckUserRequest) (dtos.CheckUserResponse, error) */
+	/* 	GetUser(ctx context.Context) (dtos.ResponseUser, error)
+	UpdateUser(ctx context.Context, updateUserRequest dtos.UpdateUserRequest) error */
 }

@@ -63,9 +63,10 @@ func (j *JwtManager) ParseAndValidateToken(tokenString string) (*Claims, error) 
 	return token.Claims.(*Claims), nil
 }
 
-func (m *JwtManager) CreateResetToken(userID string) (string, error) {
+func (m *JwtManager) CreateResetToken(userID string, userEmail string) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": userID,
+		"email": userEmail,
 		"exp": time.Now().Add(resetTTL).Unix(),
 		"prp": "reset",
 	}
@@ -74,33 +75,43 @@ func (m *JwtManager) CreateResetToken(userID string) (string, error) {
 	return tok.SignedString(m.SecretKey)
 }
 
-func (m *JwtManager) VerifyResetToken(tokenStr string) (string, error) {
+func (m *JwtManager) VerifyResetToken(tokenStr string) (string, string, error) {
 	tok, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
 		return m.SecretKey, nil
 	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Name}))
 	if err != nil || !tok.Valid {
-		log.Println("error parsing token: ", err.Error())
-		return "", errs.ErrInvalidToken
+		if err != nil {
+			log.Println("error parsing token:", err.Error())
+		}
+		return "", "", errs.ErrInvalidToken
 	}
 
 	claims, ok := tok.Claims.(jwt.MapClaims)
 	if !ok {
-		return "", errs.ErrInvalidToken
+		return "", "", errs.ErrInvalidToken
 	}
 
 	if claims["prp"] != "reset" {
-		return "", errs.ErrInvalidToken
+		return "", "", errs.ErrInvalidToken
 	}
 
 	sub, ok := claims["sub"].(string)
+	if !ok || sub == "" {
+		return "", "", errs.ErrInvalidToken
+	}
+
+	email, ok := claims["email"].(string)
+	if !ok || email == "" {
+		return "", "", errs.ErrInvalidToken
+	}
+
+	expF, ok := claims["exp"].(float64)
 	if !ok {
-		return "", errs.ErrInvalidToken
+		return "", "", errs.ErrInvalidToken
+	}
+	if time.Now().Unix() > int64(expF) {
+		return "", "", errs.ErrInvalidToken
 	}
 
-	exp, _ := claims["exp"].(float64)
-	if time.Now().Unix() > int64(exp) {
-		return "", errs.ErrInvalidToken
-	}
-
-	return sub, nil
+	return sub, email, nil
 }

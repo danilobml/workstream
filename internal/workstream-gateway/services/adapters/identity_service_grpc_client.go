@@ -46,7 +46,7 @@ func (c *IdentityClient) Login(ctx context.Context, loginReq dtos.LoginRequest) 
 
 func (c *IdentityClient) ListAllUsers(ctx context.Context) (dtos.GetAllUsersResponse, error) {
 	resp, err := c.pb.ListAllUsers(ctx, &pb.ListAllUsersRequest{})
-		if err != nil {
+	if err != nil {
 		return dtos.GetAllUsersResponse{}, grpcutils.ParseGrpcError(err)
 	}
 
@@ -59,9 +59,9 @@ func (c *IdentityClient) ListAllUsers(ctx context.Context) (dtos.GetAllUsersResp
 		}
 
 		user := dtos.ResponseUser{
-			ID: id,
-			Email: user.Email,
-			Roles: getResponseRoles(user.Roles),
+			ID:       id,
+			Email:    user.Email,
+			Roles:    getResponseRoles(user.Roles),
 			IsActive: user.IsActive,
 		}
 
@@ -90,7 +90,16 @@ func (c *IdentityClient) RemoveUser(ctx context.Context, req dtos.RemoveUserRequ
 }
 
 func (c *IdentityClient) RequestPasswordReset(ctx context.Context, req dtos.RequestPasswordResetRequest) error {
-		_, err := c.pb.RequestPasswordReset(ctx, &pb.RequestPasswordResetRequest{Email: req.Email})
+	_, err := c.pb.RequestPasswordReset(ctx, &pb.RequestPasswordResetRequest{Email: req.Email})
+	if err != nil {
+		return grpcutils.ParseGrpcError(err)
+	}
+
+	return nil
+}
+
+func (c *IdentityClient) ResetPassword(ctx context.Context, req dtos.ResetPasswordRequest) error {
+	_, err := c.pb.ResetPassword(ctx, &pb.ResetPasswordRequest{Password: req.Password, ResetToken: req.ResetToken})
 	if err != nil {
 		return grpcutils.ParseGrpcError(err)
 	}
@@ -101,7 +110,7 @@ func (c *IdentityClient) RequestPasswordReset(ctx context.Context, req dtos.Requ
 func getResponseRoles(roles []*pb.Role) []string {
 	var roleStrings []string
 	for _, role := range roles {
-		roleStrings = append(roleStrings, role.GetName()) 
+		roleStrings = append(roleStrings, role.GetName())
 	}
 	return roleStrings
 }

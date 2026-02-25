@@ -99,7 +99,7 @@ func (us *UserService) Login(ctx context.Context, loginReq dtos.LoginRequest) (d
 	return dtos.LoginResponse{Token: j}, nil
 }
 
-func (us *UserService) GetUserData(ctx context.Context) (dtos.ResponseUser, error) {
+func (us *UserService) GetUser(ctx context.Context) (dtos.ResponseUser, error) {
 	claims, ok := authcontext.GetClaims(ctx)
 	if !ok {
 		return dtos.ResponseUser{}, errs.ErrInvalidToken
@@ -156,7 +156,7 @@ func (us *UserService) RequestPasswordReset(ctx context.Context, passResetReq dt
 		return err
 	}
 
-	token, err := us.jwtManager.CreateResetToken(user.ID.String())
+	token, err := us.jwtManager.CreateResetToken(user.ID.String(), user.Email)
 	if err != nil {
 		log.Println("Error sending email: ", err)
 		return err
@@ -173,7 +173,7 @@ func (us *UserService) RequestPasswordReset(ctx context.Context, passResetReq dt
 }
 
 func (us *UserService) ResetPassword(ctx context.Context, resetPassRequest dtos.ResetPasswordRequest) error {
-	userID, err := us.jwtManager.VerifyResetToken(resetPassRequest.ResetToken)
+	userID, email, err := us.jwtManager.VerifyResetToken(resetPassRequest.ResetToken)
 	if err != nil {
 		return errs.ErrInvalidToken
 	}
@@ -194,7 +194,7 @@ func (us *UserService) ResetPassword(ctx context.Context, resetPassRequest dtos.
 
 	userWithNewPassword := models.User{
 		ID:             user.ID,
-		Email:          user.Email,
+		Email:          email,
 		HashedPassword: newHashedPassword,
 		Roles:          user.Roles,
 		IsActive:       user.IsActive,
@@ -208,7 +208,7 @@ func (us *UserService) ResetPassword(ctx context.Context, resetPassRequest dtos.
 	return nil
 }
 
-func (us *UserService) UpdateUserData(ctx context.Context, updateUserRequest dtos.UpdateUserRequest) error {
+func (us *UserService) UpdateUser(ctx context.Context, updateUserRequest dtos.UpdateUserRequest) error {
 	user, err := us.userRepository.FindById(ctx, updateUserRequest.ID)
 	if err != nil {
 		return err
@@ -288,43 +288,4 @@ func (us *UserService) RemoveUser(ctx context.Context, req dtos.RemoveUserReques
 	}
 
 	return nil
-}
-
-// For external services:
-func (us *UserService) CheckUser(ctx context.Context, checkUserReq dtos.CheckUserRequest) (dtos.CheckUserResponse, error) {
-	claims, err := us.jwtManager.ParseAndValidateToken(checkUserReq.Token)
-	if err != nil {
-		return dtos.CheckUserResponse{
-			IsValid: false,
-		}, err
-	}
-
-	user, err := us.userRepository.FindByEmail(ctx, claims.Email)
-	if err != nil {
-		return dtos.CheckUserResponse{
-			IsValid: false,
-		}, err
-	}
-
-	if !user.IsActive {
-		return dtos.CheckUserResponse{
-			IsValid: false,
-			User:    *user,
-		}, nil
-	}
-
-	return dtos.CheckUserResponse{
-		IsValid: true,
-		User:    *user,
-	}, nil
-}
-
-// Not exposed
-func (us *UserService) GetUser(ctx context.Context, id uuid.UUID) (*models.User, error) {
-	user, err := us.userRepository.FindById(ctx, id)
-	if err != nil {
-		return nil, errs.ErrNotFound
-	}
-
-	return user, nil
 }

@@ -155,6 +155,32 @@ func (ih *IdentityHandler) RequestPasswordReset(w http.ResponseWriter, r *http.R
 	helpers.WriteJSONResponse(w, http.StatusNoContent, "")
 }
 
+func (ih *IdentityHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	resetPassReq := dtos.ResetPasswordRequest{}
+	err := json.NewDecoder(r.Body).Decode(&resetPassReq)
+	if err != nil {
+		helpers.WriteJSONError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	if !ih.isInputValid(w, resetPassReq) {
+		return
+	}
+
+	resetPassReq.Password = strings.TrimSpace(resetPassReq.Password)
+	resetPassReq.ResetToken = strings.TrimSpace(resetPassReq.ResetToken)
+
+	err = ih.identityService.ResetPassword(ctx, resetPassReq)
+	if err != nil {
+		helpers.WriteErrorsResponse(w, err)
+		return
+	}
+
+	helpers.WriteJSONResponse(w, http.StatusNoContent, "")
+}
+
 /* 
 func (ih *IdentityHandler) GetUserData(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -198,33 +224,6 @@ func (ih *IdentityHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	helpers.WriteJSONResponse(w, http.StatusOK, "updated successfully")
-}
-
-func (ih *IdentityHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	resetPassReq := dtos.ResetPasswordRequest{}
-	err := json.NewDecoder(r.Body).Decode(&resetPassReq)
-	if err != nil {
-		helpers.WriteJSONError(w, http.StatusBadRequest, "Invalid JSON")
-		return
-	}
-
-	if !ih.isInputValid(w, resetPassReq) {
-		return
-	}
-
-	resetPassReq.Password = strings.TrimSpace(resetPassReq.Password)
-	resetPassReq.Email = strings.TrimSpace(resetPassReq.Email)
-	resetPassReq.ResetToken = strings.TrimSpace(resetPassReq.ResetToken)
-
-	err = ih.identityService.ResetPassword(ctx, resetPassReq)
-	if err != nil {
-		helpers.WriteErrorsResponse(w, err)
-		return
-	}
-
-	helpers.WriteJSONResponse(w, http.StatusNoContent, "")
 }
 
 func (ih *IdentityHandler) CheckUser(w http.ResponseWriter, r *http.Request) {

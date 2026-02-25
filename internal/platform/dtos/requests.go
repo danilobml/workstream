@@ -38,7 +38,6 @@ type RequestPasswordResetRequest struct {
 }
 
 type ResetPasswordRequest struct {
-	Email      string `json:"email" validate:"required,email"`
 	Password   string `json:"password" validate:"required,min=6,max=20"`
 	ResetToken string `json:"reset_token,omitempty"`
 }
