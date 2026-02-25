@@ -8,14 +8,10 @@ service IdentityService {
 	rpc Unregister(UnregisterRequest) returns (UnregisterResponse);
 	rpc RequestPasswordReset(RequestPasswordResetRequest) returns (RequestPasswordResetResponse);
 	rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
-	// admin
 	rpc ListAllUsers(ListAllUsersRequest) returns (UserListResponse);
 	rpc RemoveUser(RemoveUserRequest) returns (RemoveUserResponse);
-	// TODO - Implement the RPCs below as needed:
-	/* rpc GetUserData(GetUserDataRequest) returns (SingleUserResponse);
-	rpc UpdateUserData(UpdateUserRequest) returns (UpdateUserResponse);
 	rpc GetUser(GetUserRequest) returns (SingleUserResponse);
-	rpc CheckUser(CheckUserRequest) returns (CheckUserResponse); */
+	/* rpc UpdateUser(UpdateUserRequest) returns (SingleUserResponse); */
 };
 
 message RegisterRequest {
@@ -48,6 +44,14 @@ message RemoveUserRequest {
 };
 
 message RemoveUserResponse {};
+
+message GetUserRequest {
+	string id = 1;
+};
+
+message SingleUserResponse {
+	User user = 1;
+};
 
 message RequestPasswordResetRequest {
 	string email = 1;

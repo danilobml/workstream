@@ -21,7 +21,7 @@ func RegisterIdentityRoutes(identityHandler *handlers.IdentityHandler, auth midd
 	// admin
 	mux.Handle("GET /users", auth(http.HandlerFunc(identityHandler.GetAllUsers)))
 	mux.Handle("DELETE /users/{id}", auth(http.HandlerFunc(identityHandler.RemoveUser)))
-	// mux.Handle("GET /users/{id}", auth(http.HandlerFunc(identityHandler.GetUser)))
+	mux.Handle("GET /users/{id}", auth(http.HandlerFunc(identityHandler.GetUser)))
 	// mux.Handle("PUT /users/{id}", auth(http.HandlerFunc(identityHandler.UpdateUser)))
 
 	return mux

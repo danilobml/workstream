@@ -75,6 +75,33 @@ func (a *IdentityGrpcAdapter) ListAllUsers(ctx context.Context, req *pb.ListAllU
 	return &pb.UserListResponse{Users: responseUsers}, nil
 }
 
+func (a *IdentityGrpcAdapter) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.SingleUserResponse, error) {
+	ctx, err := middleware.AuthenticateGRPC(ctx, a.jwtManager)
+	if err != nil {
+		return nil, grpcutils.ParseCustomError(err)
+	}
+
+	parsedId, err := uuid.Parse(req.Id)
+	if err != nil {
+		return nil, grpcutils.ParseCustomError(err)
+	}
+
+	user, err := a.svc.GetUser(ctx, dtos.GetUserRequest{Id: parsedId})
+	if err != nil {
+		return nil, grpcutils.ParseCustomError(err)
+	}
+
+	roles := convertRoles(user.Roles)
+	respUser := &pb.User{
+		Id:       user.ID.String(),
+		Email:    user.Email,
+		Roles:    roles,
+		IsActive: user.IsActive,
+	}
+
+	return &pb.SingleUserResponse{User: respUser}, nil
+}
+
 func (a *IdentityGrpcAdapter) Unregister(ctx context.Context, req *pb.UnregisterRequest) (*pb.UnregisterResponse, error) {
 	ctx, err := middleware.AuthenticateGRPC(ctx, a.jwtManager)
 	if err != nil {

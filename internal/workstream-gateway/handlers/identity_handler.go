@@ -91,6 +91,25 @@ func (ih *IdentityHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	helpers.WriteJSONResponse(w, http.StatusOK, users)
 }
 
+func (ih *IdentityHandler) GetUser(w http.ResponseWriter, r *http.Request) {
+	auth := r.Header.Get("Authorization")
+	ctx := httputils.CtxWithAuth(r.Context(), auth)
+
+	userId, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		helpers.WriteJSONError(w, http.StatusBadRequest, "no valid user id supplied")
+		return
+	}
+
+	user, err := ih.identityService.GetUser(ctx, dtos.GetUserRequest{Id: userId})
+	if err != nil {
+		helpers.WriteErrorsResponse(w, err)
+		return
+	}
+
+	helpers.WriteJSONResponse(w, http.StatusOK, user)
+}
+
 func (ih *IdentityHandler) UnregisterUser(w http.ResponseWriter, r *http.Request) {
 	auth := r.Header.Get("Authorization")
 	ctx := httputils.CtxWithAuth(r.Context(), auth)

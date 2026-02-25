@@ -99,13 +99,19 @@ func (us *UserService) Login(ctx context.Context, loginReq dtos.LoginRequest) (d
 	return dtos.LoginResponse{Token: j}, nil
 }
 
-func (us *UserService) GetUser(ctx context.Context) (dtos.ResponseUser, error) {
+// Admin only
+func (us *UserService) GetUser(ctx context.Context, req dtos.GetUserRequest) (dtos.ResponseUser, error) {
 	claims, ok := authcontext.GetClaims(ctx)
-	if !ok {
-		return dtos.ResponseUser{}, errs.ErrInvalidToken
+	if !ok || claims == nil {
+		return dtos.ResponseUser{}, errs.ErrUnauthorized
 	}
 
-	user, err := us.userRepository.FindByEmail(ctx, claims.Email)
+	isAdmin := us.IsUserAdmin(ctx)
+	if !isAdmin {
+		return dtos.ResponseUser{}, errs.ErrUnauthorized
+	}
+
+	user, err := us.userRepository.FindById(ctx, req.Id)
 	if err != nil {
 		return dtos.ResponseUser{}, errs.ErrNotFound
 	}

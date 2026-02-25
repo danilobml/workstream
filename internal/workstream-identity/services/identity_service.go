@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/danilobml/workstream/internal/platform/dtos"
-	//"github.com/danilobml/workstream/internal/platform/models"
 )
 
 type IdentityService interface {
@@ -15,6 +14,6 @@ type IdentityService interface {
 	ResetPassword(ctx context.Context, resetPassRequest dtos.ResetPasswordRequest) error
 	ListAllUsers(ctx context.Context) (dtos.GetAllUsersResponse, error)
 	RemoveUser(ctx context.Context, req dtos.RemoveUserRequest) error
-	/* 	GetUser(ctx context.Context) (dtos.ResponseUser, error)
-	UpdateUser(ctx context.Context, updateUserRequest dtos.UpdateUserRequest) error */
+	GetUser(ctx context.Context, req dtos.GetUserRequest) (dtos.ResponseUser, error)
+	/* 	UpdateUser(ctx context.Context, updateUserRequest dtos.UpdateUserRequest) error */
 }

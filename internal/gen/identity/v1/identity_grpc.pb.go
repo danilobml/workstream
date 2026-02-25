@@ -26,6 +26,7 @@ const (
 	IdentityService_ResetPassword_FullMethodName        = "/IdentityService/ResetPassword"
 	IdentityService_ListAllUsers_FullMethodName         = "/IdentityService/ListAllUsers"
 	IdentityService_RemoveUser_FullMethodName           = "/IdentityService/RemoveUser"
+	IdentityService_GetUser_FullMethodName              = "/IdentityService/GetUser"
 )
 
 // IdentityServiceClient is the client API for IdentityService service.
@@ -37,9 +38,9 @@ type IdentityServiceClient interface {
 	Unregister(ctx context.Context, in *UnregisterRequest, opts ...grpc.CallOption) (*UnregisterResponse, error)
 	RequestPasswordReset(ctx context.Context, in *RequestPasswordResetRequest, opts ...grpc.CallOption) (*RequestPasswordResetResponse, error)
 	ResetPassword(ctx context.Context, in *ResetPasswordRequest, opts ...grpc.CallOption) (*ResetPasswordResponse, error)
-	// admin
 	ListAllUsers(ctx context.Context, in *ListAllUsersRequest, opts ...grpc.CallOption) (*UserListResponse, error)
 	RemoveUser(ctx context.Context, in *RemoveUserRequest, opts ...grpc.CallOption) (*RemoveUserResponse, error)
+	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*SingleUserResponse, error)
 }
 
 type identityServiceClient struct {
@@ -120,6 +121,16 @@ func (c *identityServiceClient) RemoveUser(ctx context.Context, in *RemoveUserRe
 	return out, nil
 }
 
+func (c *identityServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*SingleUserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SingleUserResponse)
+	err := c.cc.Invoke(ctx, IdentityService_GetUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IdentityServiceServer is the server API for IdentityService service.
 // All implementations must embed UnimplementedIdentityServiceServer
 // for forward compatibility.
@@ -129,9 +140,9 @@ type IdentityServiceServer interface {
 	Unregister(context.Context, *UnregisterRequest) (*UnregisterResponse, error)
 	RequestPasswordReset(context.Context, *RequestPasswordResetRequest) (*RequestPasswordResetResponse, error)
 	ResetPassword(context.Context, *ResetPasswordRequest) (*ResetPasswordResponse, error)
-	// admin
 	ListAllUsers(context.Context, *ListAllUsersRequest) (*UserListResponse, error)
 	RemoveUser(context.Context, *RemoveUserRequest) (*RemoveUserResponse, error)
+	GetUser(context.Context, *GetUserRequest) (*SingleUserResponse, error)
 	mustEmbedUnimplementedIdentityServiceServer()
 }
 
@@ -162,6 +173,9 @@ func (UnimplementedIdentityServiceServer) ListAllUsers(context.Context, *ListAll
 }
 func (UnimplementedIdentityServiceServer) RemoveUser(context.Context, *RemoveUserRequest) (*RemoveUserResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemoveUser not implemented")
+}
+func (UnimplementedIdentityServiceServer) GetUser(context.Context, *GetUserRequest) (*SingleUserResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUser not implemented")
 }
 func (UnimplementedIdentityServiceServer) mustEmbedUnimplementedIdentityServiceServer() {}
 func (UnimplementedIdentityServiceServer) testEmbeddedByValue()                         {}
@@ -310,6 +324,24 @@ func _IdentityService_RemoveUser_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).GetUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_GetUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).GetUser(ctx, req.(*GetUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IdentityService_ServiceDesc is the grpc.ServiceDesc for IdentityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -344,6 +376,10 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveUser",
 			Handler:    _IdentityService_RemoveUser_Handler,
+		},
+		{
+			MethodName: "GetUser",
+			Handler:    _IdentityService_GetUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

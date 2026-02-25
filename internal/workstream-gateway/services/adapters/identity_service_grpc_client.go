@@ -89,6 +89,29 @@ func (c *IdentityClient) RemoveUser(ctx context.Context, req dtos.RemoveUserRequ
 	return nil
 }
 
+func (c *IdentityClient) GetUser(ctx context.Context, req dtos.GetUserRequest) (dtos.ResponseUser, error) {
+	resp, err := c.pb.GetUser(ctx, &pb.GetUserRequest{Id: req.Id.String()})
+	if err != nil {
+		return dtos.ResponseUser{}, grpcutils.ParseGrpcError(err)
+	}
+
+	user := resp.User
+
+	id, err := uuid.Parse(user.Id)
+	if err != nil {
+		return dtos.ResponseUser{}, err
+	}
+
+	respUser := dtos.ResponseUser{
+		ID:       id,
+		Email:    user.Email,
+		Roles:    getResponseRoles(user.Roles),
+		IsActive: user.IsActive,
+	}
+
+	return respUser, nil
+}
+
 func (c *IdentityClient) RequestPasswordReset(ctx context.Context, req dtos.RequestPasswordResetRequest) error {
 	_, err := c.pb.RequestPasswordReset(ctx, &pb.RequestPasswordResetRequest{Email: req.Email})
 	if err != nil {
