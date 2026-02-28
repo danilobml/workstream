@@ -226,7 +226,13 @@ paths:
     patch:
       operationId: unregisterUser
       summary: Unregister user
-      tags: [Identity]
+      tags: [Identity, Identity/Admin]
+      description: |
+            Unregisters a user.
+
+            Authorization rules:
+            - The authenticated user may unregister their own account.
+            - An authenticated user with the `admin` role may unregister any user.
       parameters:
         - name: id
           in: path
@@ -301,7 +307,7 @@ paths:
       summary: List users (admin only)
       operationId: listAllUsers
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       responses:
         "200":
           description: List of users
@@ -325,7 +331,7 @@ paths:
         Returns a user
       operationId: getUser
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       parameters:
         - name: id
           in: path
@@ -355,7 +361,7 @@ paths:
         Updates a user
       operationId: updateUser
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       parameters:
         - name: id
           in: path
@@ -391,7 +397,7 @@ paths:
         Deletes a user
       operationId: deleteUser
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       parameters:
         - name: id
           in: path
