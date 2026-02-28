@@ -27,9 +27,10 @@ type GetUserRequest struct {
 }
 
 type UpdateUserRequest struct {
-	ID    uuid.UUID `json:"-"`
-	Email string    `json:"email" validate:"omitempty,email"`
-	Roles []string  `json:"roles" validate:"omitempty,dive,oneof=user admin"`
+	Id       uuid.UUID `json:"-"`
+	Email    string    `json:"email" validate:"omitempty,email"`
+	Roles    []string  `json:"roles" validate:"omitempty,dive,oneof=user admin"`
+	IsActive bool      `json:"is_active" validate:"boolean"`
 }
 
 type RequestPasswordResetRequest struct {

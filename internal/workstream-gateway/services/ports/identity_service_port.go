@@ -15,5 +15,5 @@ type IdentityServicePort interface {
 	RequestPasswordReset(ctx context.Context, req dtos.RequestPasswordResetRequest) error
 	ResetPassword(ctx context.Context, req dtos.ResetPasswordRequest) error
 	GetUser(ctx context.Context, req dtos.GetUserRequest) (dtos.ResponseUser, error)
-	/* 	UpdateUser(ctx context.Context, updateUserRequest dtos.UpdateUserRequest) error */
+	UpdateUser(ctx context.Context, updateUserRequest dtos.UpdateUserRequest) error
 }

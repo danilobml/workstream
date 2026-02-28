@@ -200,21 +200,9 @@ func (ih *IdentityHandler) ResetPassword(w http.ResponseWriter, r *http.Request)
 	helpers.WriteJSONResponse(w, http.StatusNoContent, "")
 }
 
-/* 
-func (ih *IdentityHandler) GetUserData(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	resp, err := ih.identityService.GetUserData(ctx)
-	if err != nil {
-		helpers.WriteErrorsResponse(w, err)
-		return
-	}
-
-	helpers.WriteJSONResponse(w, http.StatusOK, resp)
-}
-
 func (ih *IdentityHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	auth := r.Header.Get("Authorization")
+	ctx := httputils.CtxWithAuth(r.Context(), auth)
 
 	userId, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
@@ -233,10 +221,10 @@ func (ih *IdentityHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updateReq.ID = userId
+	updateReq.Id = userId
 	updateReq.Email = strings.TrimSpace(updateReq.Email)
 
-	err = ih.identityService.UpdateUserData(ctx, updateReq)
+	err = ih.identityService.UpdateUser(ctx, updateReq)
 	if err != nil {
 		helpers.WriteErrorsResponse(w, err)
 		return
@@ -244,37 +232,6 @@ func (ih *IdentityHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	helpers.WriteJSONResponse(w, http.StatusOK, "updated successfully")
 }
-
-func (ih *IdentityHandler) CheckUser(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	apiKey := strings.TrimSpace(r.Header.Get("User-Api-Key"))
-
-	if apiKey != ih.apiKey {
-		helpers.WriteJSONError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	checkUserReq := dtos.CheckUserRequest{}
-	err := json.NewDecoder(r.Body).Decode(&checkUserReq)
-	if err != nil {
-		helpers.WriteJSONError(w, http.StatusBadRequest, "Invalid JSON")
-		return
-	}
-
-	if !ih.isInputValid(w, checkUserReq) {
-		return
-	}
-
-	resp, err := ih.identityService.CheckUser(ctx, checkUserReq)
-	if err != nil {
-		helpers.WriteErrorsResponse(w, err)
-		return
-	}
-
-	helpers.WriteJSONResponse(w, http.StatusOK, resp)
-}
- */
 
 // Validation Helper:
 func (ih *IdentityHandler) isInputValid(w http.ResponseWriter, structToValidate any) bool {

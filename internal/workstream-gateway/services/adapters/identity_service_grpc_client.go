@@ -112,6 +112,20 @@ func (c *IdentityClient) GetUser(ctx context.Context, req dtos.GetUserRequest) (
 	return respUser, nil
 }
 
+func (c *IdentityClient) UpdateUser(ctx context.Context, req dtos.UpdateUserRequest) error {
+	_, err := c.pb.UpdateUser(ctx, &pb.UpdateUserRequest{
+		Id: req.Id.String(),
+		Email: req.Email,
+		Roles: getRequestRoles(req.Roles),
+		IsActive: req.IsActive,
+	})
+	if err != nil {
+		return grpcutils.ParseGrpcError(err)
+	}
+
+	return nil
+}
+
 func (c *IdentityClient) RequestPasswordReset(ctx context.Context, req dtos.RequestPasswordResetRequest) error {
 	_, err := c.pb.RequestPasswordReset(ctx, &pb.RequestPasswordResetRequest{Email: req.Email})
 	if err != nil {
@@ -136,4 +150,15 @@ func getResponseRoles(roles []*pb.Role) []string {
 		roleStrings = append(roleStrings, role.GetName())
 	}
 	return roleStrings
+}
+
+func getRequestRoles(roles []string) []*pb.Role {
+	var reqRoles []*pb.Role
+	for _, role := range roles {
+		reqRole := pb.Role{
+			Name: role,
+		}	
+		reqRoles = append(reqRoles, &reqRole)
+	}
+	return reqRoles
 }

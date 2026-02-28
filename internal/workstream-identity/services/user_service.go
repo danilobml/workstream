@@ -214,14 +214,15 @@ func (us *UserService) ResetPassword(ctx context.Context, resetPassRequest dtos.
 	return nil
 }
 
+// Admin only
 func (us *UserService) UpdateUser(ctx context.Context, updateUserRequest dtos.UpdateUserRequest) error {
-	user, err := us.userRepository.FindById(ctx, updateUserRequest.ID)
+	user, err := us.userRepository.FindById(ctx, updateUserRequest.Id)
 	if err != nil {
 		return err
 	}
 
-	// Only the user themselves, or admins can update data
-	if !us.IsUserOwner(ctx, user.Email) && !us.IsUserAdmin(ctx) {
+	// Only admins can update data
+	if !us.IsUserAdmin(ctx) {
 		return errs.ErrUnauthorized
 	}
 
@@ -230,15 +231,29 @@ func (us *UserService) UpdateUser(ctx context.Context, updateUserRequest dtos.Up
 		return errs.ErrParsingRoles
 	}
 
-	userToUnregister := models.User{
-		ID:             user.ID,
-		Email:          updateUserRequest.Email,
-		HashedPassword: user.HashedPassword,
-		Roles:          dbRoles,
-		IsActive:       user.IsActive,
+	var updateEmail string
+	if updateUserRequest.Email != "" {
+		updateEmail = updateUserRequest.Email
+	} else {
+		updateEmail = user.Email
 	}
 
-	err = us.userRepository.Update(ctx, userToUnregister)
+	var updateRoles []models.Role
+	if len(dbRoles) > 0 {
+		updateRoles = dbRoles
+	} else {
+		updateRoles = user.Roles
+	}
+
+	userToUpdate := models.User{
+		ID:             user.ID,
+		Email:          updateEmail,
+		HashedPassword: user.HashedPassword,
+		Roles:          updateRoles,
+		IsActive:       updateUserRequest.IsActive,
+	}
+
+	err = us.userRepository.Update(ctx, userToUpdate)
 	if err != nil {
 		return err
 	}

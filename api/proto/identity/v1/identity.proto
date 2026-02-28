@@ -11,7 +11,7 @@ service IdentityService {
 	rpc ListAllUsers(ListAllUsersRequest) returns (UserListResponse);
 	rpc RemoveUser(RemoveUserRequest) returns (RemoveUserResponse);
 	rpc GetUser(GetUserRequest) returns (SingleUserResponse);
-	/* rpc UpdateUser(UpdateUserRequest) returns (SingleUserResponse); */
+	rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
 };
 
 message RegisterRequest {
@@ -38,20 +38,6 @@ message UnregisterRequest {
 };
 
 message UnregisterResponse {};
-
-message RemoveUserRequest {
-	string id = 1;
-};
-
-message RemoveUserResponse {};
-
-message GetUserRequest {
-	string id = 1;
-};
-
-message SingleUserResponse {
-	User user = 1;
-};
 
 message RequestPasswordResetRequest {
 	string email = 1;
@@ -81,4 +67,27 @@ message ListAllUsersRequest {};
 
 message UserListResponse {
 	repeated User users = 1;
+};
+
+message RemoveUserRequest {
+	string id = 1;
+};
+
+message RemoveUserResponse {};
+
+message GetUserRequest {
+	string id = 1;
+};
+
+message UpdateUserRequest {
+	string id = 1;
+	string email = 2;
+	repeated Role roles = 3;
+	bool is_active = 4;
+};
+
+message UpdateUserResponse {};
+
+message SingleUserResponse {
+	User user = 1;
 };

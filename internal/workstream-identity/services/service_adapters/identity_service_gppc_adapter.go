@@ -61,7 +61,7 @@ func (a *IdentityGrpcAdapter) ListAllUsers(ctx context.Context, req *pb.ListAllU
 	var responseUsers []*pb.User
 	for _, user := range out {
 
-		roles := convertRoles(user.Roles)
+		roles := convertRolesToPb(user.Roles)
 		respUser := &pb.User{
 			Id:       user.ID.String(),
 			Email:    user.Email,
@@ -91,7 +91,7 @@ func (a *IdentityGrpcAdapter) GetUser(ctx context.Context, req *pb.GetUserReques
 		return nil, grpcutils.ParseCustomError(err)
 	}
 
-	roles := convertRoles(user.Roles)
+	roles := convertRolesToPb(user.Roles)
 	respUser := &pb.User{
 		Id:       user.ID.String(),
 		Email:    user.Email,
@@ -140,6 +140,30 @@ func (a *IdentityGrpcAdapter) RemoveUser(ctx context.Context, req *pb.RemoveUser
 	return &pb.RemoveUserResponse{}, nil
 }
 
+func (a *IdentityGrpcAdapter) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
+	ctx, err := middleware.AuthenticateGRPC(ctx, a.jwtManager)
+	if err != nil {
+		return &pb.UpdateUserResponse{}, grpcutils.ParseCustomError(err)
+	}
+
+	parsedId, err := uuid.Parse(req.Id)
+	if err != nil {
+		return &pb.UpdateUserResponse{}, grpcutils.ParseCustomError(err)
+	}
+
+	err = a.svc.UpdateUser(ctx, dtos.UpdateUserRequest{
+		Id:       parsedId,
+		Email:    req.GetEmail(),
+		Roles:    convertPbRolesToString(req.GetRoles()),
+		IsActive: req.GetIsActive(),
+	})
+	if err != nil {
+		return &pb.UpdateUserResponse{}, grpcutils.ParseCustomError(err)
+	}
+
+	return &pb.UpdateUserResponse{}, nil
+}
+
 func (a *IdentityGrpcAdapter) RequestPasswordReset(ctx context.Context, req *pb.RequestPasswordResetRequest) (*pb.RequestPasswordResetResponse, error) {
 	err := a.svc.RequestPasswordReset(ctx, dtos.RequestPasswordResetRequest{Email: req.GetEmail()})
 	if err != nil {
@@ -158,12 +182,21 @@ func (a *IdentityGrpcAdapter) ResetPassword(ctx context.Context, req *pb.ResetPa
 	return &pb.ResetPasswordResponse{}, nil
 }
 
-func convertRoles(roles []string) []*pb.Role {
+func convertRolesToPb(roles []string) []*pb.Role {
 	var responseRoles []*pb.Role
 	for _, role := range roles {
 		respRole := &pb.Role{
 			Name: role,
 		}
+		responseRoles = append(responseRoles, respRole)
+	}
+	return responseRoles
+}
+
+func convertPbRolesToString(pbRoles []*pb.Role) []string {
+	var responseRoles []string
+	for _, pbRole := range pbRoles {
+		respRole := pbRole.GetName()
 		responseRoles = append(responseRoles, respRole)
 	}
 	return responseRoles

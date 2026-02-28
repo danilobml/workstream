@@ -15,5 +15,5 @@ type IdentityService interface {
 	ListAllUsers(ctx context.Context) (dtos.GetAllUsersResponse, error)
 	RemoveUser(ctx context.Context, req dtos.RemoveUserRequest) error
 	GetUser(ctx context.Context, req dtos.GetUserRequest) (dtos.ResponseUser, error)
-	/* 	UpdateUser(ctx context.Context, updateUserRequest dtos.UpdateUserRequest) error */
+	UpdateUser(ctx context.Context, updateUserRequest dtos.UpdateUserRequest) error
 }
