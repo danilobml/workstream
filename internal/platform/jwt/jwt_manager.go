@@ -7,6 +7,7 @@ import (
 	"github.com/danilobml/workstream/internal/platform/errs"
 	"github.com/danilobml/workstream/internal/platform/models"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 type JwtManager struct {
@@ -14,13 +15,14 @@ type JwtManager struct {
 }
 
 type Claims struct {
-	Email string
-	Roles []models.Role
+	Email          string
+	OrganizationId uuid.UUID
+	Roles          []models.Role
 	jwt.RegisteredClaims
 }
 
 type ResetClaims struct {
-	Sub string `json:"sub"` // User.Id
+	Sub string `json:"sub"`
 	Exp int64  `json:"exp"`
 }
 
@@ -32,9 +34,10 @@ func NewJwtManager(secretKey []byte) *JwtManager {
 	}
 }
 
-func (j *JwtManager) CreateToken(email string, roles []models.Role) (string, error) {
+func (j *JwtManager) CreateToken(email string, roles []models.Role, organizationId uuid.UUID) (string, error) {
 	claims := Claims{
 		Email: email,
+		OrganizationId: organizationId,
 		Roles: roles,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
@@ -65,10 +68,10 @@ func (j *JwtManager) ParseAndValidateToken(tokenString string) (*Claims, error) 
 
 func (m *JwtManager) CreateResetToken(userID string, userEmail string) (string, error) {
 	claims := jwt.MapClaims{
-		"sub": userID,
+		"sub":   userID,
 		"email": userEmail,
-		"exp": time.Now().Add(resetTTL).Unix(),
-		"prp": "reset",
+		"exp":   time.Now().Add(resetTTL).Unix(),
+		"prp":   "reset",
 	}
 
 	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

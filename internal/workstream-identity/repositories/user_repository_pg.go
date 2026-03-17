@@ -56,7 +56,7 @@ func (ur *UserPgRepository) FindById(ctx context.Context, id uuid.UUID) (*models
 	var user models.User
 
 	err := ur.db.QueryRow(ctx, `
-		SELECT id, email, hashed_password, is_active
+		SELECT id, email, hashed_password, is_active, organization_id
 			FROM users
 			WHERE id = $1
 		`, id).Scan(
@@ -64,6 +64,7 @@ func (ur *UserPgRepository) FindById(ctx context.Context, id uuid.UUID) (*models
 		&user.Email,
 		&user.HashedPassword,
 		&user.IsActive,
+		&user.OrganizationId,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -85,7 +86,7 @@ func (ur *UserPgRepository) FindByEmail(ctx context.Context, email string) (*mod
 	var user models.User
 
 	err := ur.db.QueryRow(ctx, `
-		SELECT id, email, hashed_password, is_active
+		SELECT id, email, hashed_password, is_active, organization_id
 		FROM users
 		WHERE email = $1
 	`, email).Scan(
@@ -93,6 +94,7 @@ func (ur *UserPgRepository) FindByEmail(ctx context.Context, email string) (*mod
 		&user.Email,
 		&user.HashedPassword,
 		&user.IsActive,
+		&user.OrganizationId,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -118,9 +120,9 @@ func (ur *UserPgRepository) Create(ctx context.Context, user models.User) error 
 	defer tx.Rollback(ctx)
 
 	_, err = tx.Exec(ctx, `
-		INSERT INTO users (id, email, hashed_password, is_active)
+		INSERT INTO users (id, email, hashed_password, is_active, organization_id)
 		VALUES ($1, $2, $3, $4)
-	`, user.ID, user.Email, user.HashedPassword, true)
+	`, user.ID, user.Email, user.HashedPassword, true, user.OrganizationId)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
@@ -151,9 +153,9 @@ func (ur *UserPgRepository) Update(ctx context.Context, user models.User) error 
 
 	_, err = tx.Exec(ctx, `
 		UPDATE users 
-		SET email = $1, hashed_password = $2, is_active = $3
-		WHERE id = $4
-	`, user.Email, user.HashedPassword, user.IsActive, user.ID)
+		SET email = $1, hashed_password = $2, is_active = $3, organization_id = $4
+		WHERE id = $5
+	`, user.Email, user.HashedPassword, user.IsActive, user.OrganizationId, user.ID)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {

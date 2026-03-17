@@ -17,7 +17,8 @@ service IdentityService {
 message RegisterRequest {
     string email = 1;
     string password = 2;
-    repeated string roles = 3;
+	string organization_id = 3;
+    repeated string roles = 4;
 };
 
 message RegisterResponse {
@@ -61,6 +62,7 @@ message User {
 	string email = 2;
 	repeated Role roles = 3;
 	bool is_active = 4;
+	string organization_id = 5;
 };
 
 message ListAllUsersRequest {};
@@ -84,6 +86,7 @@ message UpdateUserRequest {
 	string email = 2;
 	repeated Role roles = 3;
 	bool is_active = 4;
+	string organization_id = 5;
 };
 
 message UpdateUserResponse {};

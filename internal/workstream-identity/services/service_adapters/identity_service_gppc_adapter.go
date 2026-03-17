@@ -24,9 +24,10 @@ func NewIdentityGrpcAdapter(svc services.IdentityService, jwtManager *jwt.JwtMan
 
 func (a *IdentityGrpcAdapter) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
 	out, err := a.svc.Register(ctx, dtos.RegisterRequest{
-		Email:    req.GetEmail(),
-		Password: req.GetPassword(),
-		Roles:    req.GetRoles(),
+		Email:          req.GetEmail(),
+		Password:       req.GetPassword(),
+		Roles:          req.GetRoles(),
+		OrganizationId: req.GetOrganizationId(),
 	})
 	if err != nil {
 		return nil, grpcutils.ParseCustomError(err)
@@ -63,10 +64,11 @@ func (a *IdentityGrpcAdapter) ListAllUsers(ctx context.Context, req *pb.ListAllU
 
 		roles := convertRolesToPb(user.Roles)
 		respUser := &pb.User{
-			Id:       user.ID.String(),
-			Email:    user.Email,
-			Roles:    roles,
-			IsActive: user.IsActive,
+			Id:             user.ID.String(),
+			Email:          user.Email,
+			Roles:          roles,
+			IsActive:       user.IsActive,
+			OrganizationId: user.OrganizationId.String(),
 		}
 
 		responseUsers = append(responseUsers, respUser)
@@ -93,10 +95,11 @@ func (a *IdentityGrpcAdapter) GetUser(ctx context.Context, req *pb.GetUserReques
 
 	roles := convertRolesToPb(user.Roles)
 	respUser := &pb.User{
-		Id:       user.ID.String(),
-		Email:    user.Email,
-		Roles:    roles,
-		IsActive: user.IsActive,
+		Id:             user.ID.String(),
+		Email:          user.Email,
+		Roles:          roles,
+		IsActive:       user.IsActive,
+		OrganizationId: user.OrganizationId.String(),
 	}
 
 	return &pb.SingleUserResponse{User: respUser}, nil
@@ -146,16 +149,22 @@ func (a *IdentityGrpcAdapter) UpdateUser(ctx context.Context, req *pb.UpdateUser
 		return &pb.UpdateUserResponse{}, grpcutils.ParseCustomError(err)
 	}
 
-	parsedId, err := uuid.Parse(req.Id)
+	parsedId, err := uuid.Parse(req.GetId())
+	if err != nil {
+		return &pb.UpdateUserResponse{}, grpcutils.ParseCustomError(err)
+	}
+
+	parsedOrganizationId, err := uuid.Parse(req.GetOrganizationId())
 	if err != nil {
 		return &pb.UpdateUserResponse{}, grpcutils.ParseCustomError(err)
 	}
 
 	err = a.svc.UpdateUser(ctx, dtos.UpdateUserRequest{
-		Id:       parsedId,
-		Email:    req.GetEmail(),
-		Roles:    convertPbRolesToString(req.GetRoles()),
-		IsActive: req.GetIsActive(),
+		Id:             parsedId,
+		Email:          req.GetEmail(),
+		Roles:          convertPbRolesToString(req.GetRoles()),
+		IsActive:       req.GetIsActive(),
+		OrganizationId: parsedOrganizationId,
 	})
 	if err != nil {
 		return &pb.UpdateUserResponse{}, grpcutils.ParseCustomError(err)

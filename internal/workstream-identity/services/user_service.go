@@ -63,7 +63,7 @@ func (us *UserService) Register(ctx context.Context, registerReq dtos.RegisterRe
 		return dtos.RegisterResponse{}, err
 	}
 
-	jwt, err := us.jwtManager.CreateToken(user.Email, user.Roles)
+	jwt, err := us.jwtManager.CreateToken(user.Email, user.Roles, user.OrganizationId)
 	if err != nil {
 		return dtos.RegisterResponse{}, err
 	}
@@ -91,7 +91,7 @@ func (us *UserService) Login(ctx context.Context, loginReq dtos.LoginRequest) (d
 		return dtos.LoginResponse{}, errs.ErrInvalidCredentials
 	}
 
-	j, err := us.jwtManager.CreateToken(user.Email, user.Roles)
+	j, err := us.jwtManager.CreateToken(user.Email, user.Roles, user.OrganizationId)
 	if err != nil {
 		return dtos.LoginResponse{}, err
 	}
@@ -119,10 +119,11 @@ func (us *UserService) GetUser(ctx context.Context, req dtos.GetUserRequest) (dt
 	roleNames := helpers.GetRoleNames(user.Roles)
 
 	respUser := dtos.ResponseUser{
-		ID:       user.ID,
-		Email:    user.Email,
-		Roles:    roleNames,
-		IsActive: user.IsActive,
+		ID:             user.ID,
+		Email:          user.Email,
+		Roles:          roleNames,
+		IsActive:       user.IsActive,
+		OrganizationId: user.OrganizationId,
 	}
 
 	return respUser, nil
@@ -144,6 +145,7 @@ func (us *UserService) Unregister(ctx context.Context, unregisterRequest dtos.Un
 		Email:          user.Email,
 		HashedPassword: user.HashedPassword,
 		Roles:          user.Roles,
+		OrganizationId: user.OrganizationId,
 		IsActive:       false,
 	}
 
@@ -204,6 +206,7 @@ func (us *UserService) ResetPassword(ctx context.Context, resetPassRequest dtos.
 		HashedPassword: newHashedPassword,
 		Roles:          user.Roles,
 		IsActive:       user.IsActive,
+		OrganizationId: user.OrganizationId,
 	}
 
 	err = us.userRepository.Update(ctx, userWithNewPassword)
@@ -238,6 +241,13 @@ func (us *UserService) UpdateUser(ctx context.Context, updateUserRequest dtos.Up
 		updateEmail = user.Email
 	}
 
+	var updateOrganizationId uuid.UUID
+	if updateUserRequest.OrganizationId != uuid.Nil {
+		updateOrganizationId = updateUserRequest.OrganizationId
+	} else {
+		updateOrganizationId = user.OrganizationId
+	}
+
 	var updateRoles []models.Role
 	if len(dbRoles) > 0 {
 		updateRoles = dbRoles
@@ -251,6 +261,7 @@ func (us *UserService) UpdateUser(ctx context.Context, updateUserRequest dtos.Up
 		HashedPassword: user.HashedPassword,
 		Roles:          updateRoles,
 		IsActive:       updateUserRequest.IsActive,
+		OrganizationId: updateOrganizationId,
 	}
 
 	err = us.userRepository.Update(ctx, userToUpdate)
@@ -282,10 +293,11 @@ func (us *UserService) ListAllUsers(ctx context.Context) (dtos.GetAllUsersRespon
 	for _, user := range users {
 		roleNames := helpers.GetRoleNames(user.Roles)
 		respUsers = append(respUsers, dtos.ResponseUser{
-			ID:       user.ID,
-			Email:    user.Email,
-			Roles:    roleNames,
-			IsActive: user.IsActive,
+			ID:             user.ID,
+			Email:          user.Email,
+			Roles:          roleNames,
+			IsActive:       user.IsActive,
+			OrganizationId: user.OrganizationId,
 		})
 	}
 

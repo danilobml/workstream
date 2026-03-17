@@ -5,9 +5,10 @@ import (
 )
 
 type RegisterRequest struct {
-	Email    string   `json:"email" validate:"required,email"`
-	Password string   `json:"password" validate:"required,min=6,max=20"`
-	Roles    []string `json:"roles" validate:"required,dive,oneof=user admin"`
+	Email          string   `json:"email" validate:"required,email"`
+	Password       string   `json:"password" validate:"required,min=6,max=20"`
+	Roles          []string `json:"roles" validate:"required,dive,oneof=user admin"`
+	OrganizationId string   `json:"organization_id" validate:"required"`
 }
 
 type LoginRequest struct {
@@ -27,10 +28,11 @@ type GetUserRequest struct {
 }
 
 type UpdateUserRequest struct {
-	Id       uuid.UUID `json:"-"`
-	Email    string    `json:"email" validate:"omitempty,email"`
-	Roles    []string  `json:"roles" validate:"omitempty,dive,oneof=user admin"`
-	IsActive bool      `json:"is_active" validate:"boolean"`
+	Id             uuid.UUID `json:"-"`
+	Email          string    `json:"email" validate:"omitempty,email"`
+	Roles          []string  `json:"roles" validate:"omitempty,dive,oneof=user admin"`
+	IsActive       bool      `json:"is_active" validate:"boolean"`
+	OrganizationId uuid.UUID `json:"organization_id" validate:"omitempty,string"`
 }
 
 type RequestPasswordResetRequest struct {

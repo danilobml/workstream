@@ -154,10 +154,14 @@ paths:
                 - email
                 - password
                 - roles
+                - organizationId
               properties:
                 email:
                   type: string
                   format: email
+                organizationId:
+                  type: string
+                  format: uuid
                 password:
                   type: string
                   minLength: 6
@@ -436,7 +440,7 @@ components:
     User:
       type: object
       required:
-        [id, email, roles, isActive]
+        [id, email, roles, isActive, organizationId]
       properties:
         id:
           type: string
@@ -456,6 +460,9 @@ components:
         isActive:
           type: boolean
           example: true
+        organizationId:
+          type: string
+          format: uuid
 
     Error:
       type: object

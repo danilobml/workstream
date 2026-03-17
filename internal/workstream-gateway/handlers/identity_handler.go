@@ -43,6 +43,14 @@ func (ih *IdentityHandler) Register(w http.ResponseWriter, r *http.Request) {
 	registerReq.Password = strings.TrimSpace(registerReq.Password)
 	registerReq.Email = strings.TrimSpace(registerReq.Email)
 
+	rawOrganizationId := strings.TrimSpace(registerReq.OrganizationId)
+	parsedOrganizationId , err := uuid.Parse(rawOrganizationId)
+	if err != nil {
+		helpers.WriteJSONError(w, http.StatusBadRequest, "no valid organization id supplied")
+		return
+	}
+	registerReq.OrganizationId = parsedOrganizationId.String()
+
 	resp, err := ih.identityService.Register(ctx, registerReq)
 	if err != nil {
 		helpers.WriteErrorsResponse(w, err)

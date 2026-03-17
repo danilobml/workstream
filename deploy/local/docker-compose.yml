@@ -110,6 +110,17 @@ services:
     volumes:
       - ../../internal/workstream-identity/db/migrations:/migrations:ro
 
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "8083:8080"
+    depends_on:
+      - postgres_tasks
+      - postgres_identity
+    networks:
+      - workstream
+
   # Microservices:
   workstream-tasks:
     build:

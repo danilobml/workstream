@@ -36,6 +36,7 @@ type User struct {
 	HashedPassword string    `json:"-"`
 	Roles          []Role    `json:"roles"`
 	IsActive       bool      `json:"is_active"`
+	OrganizationId uuid.UUID `json:"organization_id"`
 }
 
 type DbRole struct {

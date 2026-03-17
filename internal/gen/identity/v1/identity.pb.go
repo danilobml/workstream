@@ -22,12 +22,13 @@ const (
 )
 
 type RegisterRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
-	Roles         []string               `protobuf:"bytes,3,rep,name=roles,proto3" json:"roles,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Email          string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+	Password       string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	OrganizationId string                 `protobuf:"bytes,3,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	Roles          []string               `protobuf:"bytes,4,rep,name=roles,proto3" json:"roles,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *RegisterRequest) Reset() {
@@ -70,6 +71,13 @@ func (x *RegisterRequest) GetEmail() string {
 func (x *RegisterRequest) GetPassword() string {
 	if x != nil {
 		return x.Password
+	}
+	return ""
+}
+
+func (x *RegisterRequest) GetOrganizationId() string {
+	if x != nil {
+		return x.OrganizationId
 	}
 	return ""
 }
@@ -514,13 +522,14 @@ func (x *Role) GetName() string {
 }
 
 type User struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	Roles         []*Role                `protobuf:"bytes,3,rep,name=roles,proto3" json:"roles,omitempty"`
-	IsActive      bool                   `protobuf:"varint,4,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Email          string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	Roles          []*Role                `protobuf:"bytes,3,rep,name=roles,proto3" json:"roles,omitempty"`
+	IsActive       bool                   `protobuf:"varint,4,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
+	OrganizationId string                 `protobuf:"bytes,5,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *User) Reset() {
@@ -579,6 +588,13 @@ func (x *User) GetIsActive() bool {
 		return x.IsActive
 	}
 	return false
+}
+
+func (x *User) GetOrganizationId() string {
+	if x != nil {
+		return x.OrganizationId
+	}
+	return ""
 }
 
 type ListAllUsersRequest struct {
@@ -786,13 +802,14 @@ func (x *GetUserRequest) GetId() string {
 }
 
 type UpdateUserRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	Roles         []*Role                `protobuf:"bytes,3,rep,name=roles,proto3" json:"roles,omitempty"`
-	IsActive      bool                   `protobuf:"varint,4,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Email          string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	Roles          []*Role                `protobuf:"bytes,3,rep,name=roles,proto3" json:"roles,omitempty"`
+	IsActive       bool                   `protobuf:"varint,4,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
+	OrganizationId string                 `protobuf:"bytes,5,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *UpdateUserRequest) Reset() {
@@ -851,6 +868,13 @@ func (x *UpdateUserRequest) GetIsActive() bool {
 		return x.IsActive
 	}
 	return false
+}
+
+func (x *UpdateUserRequest) GetOrganizationId() string {
+	if x != nil {
+		return x.OrganizationId
+	}
+	return ""
 }
 
 type UpdateUserResponse struct {
@@ -937,11 +961,12 @@ var File_identity_v1_identity_proto protoreflect.FileDescriptor
 
 const file_identity_v1_identity_proto_rawDesc = "" +
 	"\n" +
-	"\x1aidentity/v1/identity.proto\"Y\n" +
+	"\x1aidentity/v1/identity.proto\"\x82\x01\n" +
 	"\x0fRegisterRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\x12\x14\n" +
-	"\x05roles\x18\x03 \x03(\tR\x05roles\"(\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\x12'\n" +
+	"\x0forganization_id\x18\x03 \x01(\tR\x0eorganizationId\x12\x14\n" +
+	"\x05roles\x18\x04 \x03(\tR\x05roles\"(\n" +
 	"\x10RegisterResponse\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\"@\n" +
 	"\fLoginRequest\x12\x14\n" +
@@ -961,12 +986,13 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"resetToken\"\x17\n" +
 	"\x15ResetPasswordResponse\"\x1a\n" +
 	"\x04Role\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\"f\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"\x8f\x01\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1b\n" +
 	"\x05roles\x18\x03 \x03(\v2\x05.RoleR\x05roles\x12\x1b\n" +
-	"\tis_active\x18\x04 \x01(\bR\bisActive\"\x15\n" +
+	"\tis_active\x18\x04 \x01(\bR\bisActive\x12'\n" +
+	"\x0forganization_id\x18\x05 \x01(\tR\x0eorganizationId\"\x15\n" +
 	"\x13ListAllUsersRequest\"/\n" +
 	"\x10UserListResponse\x12\x1b\n" +
 	"\x05users\x18\x01 \x03(\v2\x05.UserR\x05users\"#\n" +
@@ -974,12 +1000,13 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x14\n" +
 	"\x12RemoveUserResponse\" \n" +
 	"\x0eGetUserRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"s\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x9c\x01\n" +
 	"\x11UpdateUserRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1b\n" +
 	"\x05roles\x18\x03 \x03(\v2\x05.RoleR\x05roles\x12\x1b\n" +
-	"\tis_active\x18\x04 \x01(\bR\bisActive\"\x14\n" +
+	"\tis_active\x18\x04 \x01(\bR\bisActive\x12'\n" +
+	"\x0forganization_id\x18\x05 \x01(\tR\x0eorganizationId\"\x14\n" +
 	"\x12UpdateUserResponse\"/\n" +
 	"\x12SingleUserResponse\x12\x19\n" +
 	"\x04user\x18\x01 \x01(\v2\x05.UserR\x04user2\x8e\x04\n" +

@@ -70,6 +70,7 @@ func (ur *UserRepositoryInMemory) Update(ctx context.Context, user models.User) 
 	existingUser.HashedPassword = user.HashedPassword
 	existingUser.Roles = user.Roles
 	existingUser.IsActive = user.IsActive
+	existingUser.OrganizationId = user.OrganizationId
 
 	return nil
 }

@@ -2,6 +2,7 @@ package adapters
 
 import (
 	"context"
+	"log"
 
 	pb "github.com/danilobml/workstream/internal/gen/identity/v1"
 	"github.com/danilobml/workstream/internal/platform/dtos"
@@ -19,7 +20,7 @@ func NewIdentityServiceClient(conn grpc.ClientConnInterface) *IdentityClient {
 }
 
 func (c *IdentityClient) Register(ctx context.Context, registerReq dtos.RegisterRequest) (dtos.RegisterResponse, error) {
-	resp, err := c.pb.Register(ctx, &pb.RegisterRequest{Email: registerReq.Email, Password: registerReq.Password, Roles: registerReq.Roles})
+	resp, err := c.pb.Register(ctx, &pb.RegisterRequest{Email: registerReq.Email, Password: registerReq.Password, Roles: registerReq.Roles, OrganizationId: registerReq.OrganizationId})
 	if err != nil {
 		return dtos.RegisterResponse{}, grpcutils.ParseGrpcError(err)
 	}
@@ -58,11 +59,18 @@ func (c *IdentityClient) ListAllUsers(ctx context.Context) (dtos.GetAllUsersResp
 			return nil, err
 		}
 
+		parsedOrganizationId, err := uuid.Parse(user.OrganizationId)
+		if err != nil {
+			log.Println("identity grpc client adapter", err)
+			return nil, err
+		}
+
 		user := dtos.ResponseUser{
-			ID:       id,
-			Email:    user.Email,
-			Roles:    getResponseRoles(user.Roles),
-			IsActive: user.IsActive,
+			ID:             id,
+			Email:          user.Email,
+			Roles:          getResponseRoles(user.Roles),
+			IsActive:       user.IsActive,
+			OrganizationId: parsedOrganizationId,
 		}
 
 		respUsers = append(respUsers, user)
@@ -102,11 +110,18 @@ func (c *IdentityClient) GetUser(ctx context.Context, req dtos.GetUserRequest) (
 		return dtos.ResponseUser{}, err
 	}
 
+	parsedOrganizationId, err := uuid.Parse(user.OrganizationId)
+	if err != nil {
+		log.Println("gateway adapter", err)
+		return dtos.ResponseUser{}, err
+	}
+
 	respUser := dtos.ResponseUser{
-		ID:       id,
-		Email:    user.Email,
-		Roles:    getResponseRoles(user.Roles),
-		IsActive: user.IsActive,
+		ID:             id,
+		Email:          user.Email,
+		Roles:          getResponseRoles(user.Roles),
+		IsActive:       user.IsActive,
+		OrganizationId: parsedOrganizationId,
 	}
 
 	return respUser, nil
@@ -114,10 +129,11 @@ func (c *IdentityClient) GetUser(ctx context.Context, req dtos.GetUserRequest) (
 
 func (c *IdentityClient) UpdateUser(ctx context.Context, req dtos.UpdateUserRequest) error {
 	_, err := c.pb.UpdateUser(ctx, &pb.UpdateUserRequest{
-		Id: req.Id.String(),
-		Email: req.Email,
-		Roles: getRequestRoles(req.Roles),
+		Id:       req.Id.String(),
+		Email:    req.Email,
+		Roles:    getRequestRoles(req.Roles),
 		IsActive: req.IsActive,
+		OrganizationId: req.OrganizationId.String(),
 	})
 	if err != nil {
 		return grpcutils.ParseGrpcError(err)
@@ -157,7 +173,7 @@ func getRequestRoles(roles []string) []*pb.Role {
 	for _, role := range roles {
 		reqRole := pb.Role{
 			Name: role,
-		}	
+		}
 		reqRoles = append(reqRoles, &reqRole)
 	}
 	return reqRoles
