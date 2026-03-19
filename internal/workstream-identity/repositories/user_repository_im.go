@@ -20,23 +20,37 @@ func NewUserRepositoryInMemory() *UserRepositoryInMemory {
 	}
 }
 
-func (ur *UserRepositoryInMemory) List(ctx context.Context) ([]*models.User, error) {
-	usersResp := make([]*models.User, 0, len(ur.data))
+func (ur *UserRepositoryInMemory) List(ctx context.Context, scope UserScope) ([]*models.User, error) {
+	usersResp := make([]*models.User, 0)
+
 	for i := range ur.data {
-		usersResp = append(usersResp, &ur.data[i])
+		user := &ur.data[i]
+
+		if scope.OrganizationID != nil && user.OrganizationId != *scope.OrganizationID {
+			continue
+		}
+
+		usersResp = append(usersResp, user)
 	}
-	if usersResp == nil {
-		return []*models.User{}, nil
-	}
+
 	return usersResp, nil
 }
 
-func (ur *UserRepositoryInMemory) FindById(ctx context.Context, id uuid.UUID) (*models.User, error) {
+func (ur *UserRepositoryInMemory) FindById(ctx context.Context, id uuid.UUID, scope UserScope) (*models.User, error) {
 	for i := range ur.data {
-		if ur.data[i].ID == id {
-			return &ur.data[i], nil
+		user := &ur.data[i]
+
+		if user.ID != id {
+			continue
 		}
+
+		if scope.OrganizationID != nil && user.OrganizationId != *scope.OrganizationID {
+			return nil, errs.ErrNotFound
+		}
+
+		return user, nil
 	}
+
 	return nil, errs.ErrNotFound
 }
 
@@ -46,6 +60,7 @@ func (ur *UserRepositoryInMemory) FindByEmail(ctx context.Context, email string)
 			return &ur.data[i], nil
 		}
 	}
+
 	return nil, errs.ErrNotFound
 }
 
@@ -60,8 +75,8 @@ func (ur *UserRepositoryInMemory) Create(ctx context.Context, user models.User) 
 	return nil
 }
 
-func (ur *UserRepositoryInMemory) Update(ctx context.Context, user models.User) error {
-	existingUser, err := ur.FindById(ctx, user.ID)
+func (ur *UserRepositoryInMemory) Update(ctx context.Context, user models.User, scope UserScope) error {
+	existingUser, err := ur.FindById(ctx, user.ID, scope)
 	if err != nil {
 		return err
 	}
@@ -75,14 +90,33 @@ func (ur *UserRepositoryInMemory) Update(ctx context.Context, user models.User) 
 	return nil
 }
 
-func (ur *UserRepositoryInMemory) Delete(ctx context.Context, id uuid.UUID) error {
-	_, err := ur.FindById(ctx, id)
+func (ur *UserRepositoryInMemory) SavePassword(ctx context.Context, userId uuid.UUID, newPassword string) error {
+	for i := range ur.data {
+		if ur.data[i].ID == userId {
+			ur.data[i].HashedPassword = newPassword
+			return nil
+		}
+	}
+
+	return errs.ErrNotFound
+}
+
+func (ur *UserRepositoryInMemory) Delete(ctx context.Context, id uuid.UUID, scope UserScope) error {
+	_, err := ur.FindById(ctx, id, scope)
 	if err != nil {
 		return err
 	}
 
 	ur.data = slices.DeleteFunc(ur.data, func(user models.User) bool {
-		return user.ID == id
+		if user.ID != id {
+			return false
+		}
+
+		if scope.OrganizationID != nil && user.OrganizationId != *scope.OrganizationID {
+			return false
+		}
+
+		return true
 	})
 
 	return nil

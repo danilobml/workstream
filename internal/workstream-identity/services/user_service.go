@@ -111,7 +111,7 @@ func (us *UserService) GetUser(ctx context.Context, req dtos.GetUserRequest) (dt
 		return dtos.ResponseUser{}, errs.ErrUnauthorized
 	}
 
-	user, err := us.userRepository.FindById(ctx, req.Id)
+	user, err := us.userRepository.FindById(ctx, req.Id, repositories.UserScope{OrganizationID: &claims.OrganizationId})
 	if err != nil {
 		return dtos.ResponseUser{}, errs.ErrNotFound
 	}
@@ -130,7 +130,12 @@ func (us *UserService) GetUser(ctx context.Context, req dtos.GetUserRequest) (dt
 }
 
 func (us *UserService) Unregister(ctx context.Context, unregisterRequest dtos.UnregisterRequest) error {
-	user, err := us.userRepository.FindById(ctx, unregisterRequest.Id)
+	claims, ok := authcontext.GetClaims(ctx)
+	if !ok || claims == nil {
+		return errs.ErrUnauthorized
+	}
+
+	user, err := us.userRepository.FindById(ctx, unregisterRequest.Id, repositories.UserScope{OrganizationID: &claims.OrganizationId})
 	if err != nil {
 		return err
 	}
@@ -149,7 +154,7 @@ func (us *UserService) Unregister(ctx context.Context, unregisterRequest dtos.Un
 		IsActive:       false,
 	}
 
-	err = us.userRepository.Update(ctx, userToUnregister)
+	err = us.userRepository.Update(ctx, userToUnregister, repositories.UserScope{OrganizationID: &claims.OrganizationId})
 	if err != nil {
 		return err
 	}
@@ -181,16 +186,12 @@ func (us *UserService) RequestPasswordReset(ctx context.Context, passResetReq dt
 }
 
 func (us *UserService) ResetPassword(ctx context.Context, resetPassRequest dtos.ResetPasswordRequest) error {
-	userID, email, err := us.jwtManager.VerifyResetToken(resetPassRequest.ResetToken)
-	if err != nil {
-		return errs.ErrInvalidToken
-	}
-	uid, err := uuid.Parse(userID)
+	_, email, err := us.jwtManager.VerifyResetToken(resetPassRequest.ResetToken)
 	if err != nil {
 		return errs.ErrInvalidToken
 	}
 
-	user, err := us.userRepository.FindById(ctx, uid)
+	user, err := us.userRepository.FindByEmail(ctx, email)
 	if err != nil {
 		return errs.ErrInvalidToken
 	}
@@ -200,16 +201,7 @@ func (us *UserService) ResetPassword(ctx context.Context, resetPassRequest dtos.
 		return err
 	}
 
-	userWithNewPassword := models.User{
-		ID:             user.ID,
-		Email:          email,
-		HashedPassword: newHashedPassword,
-		Roles:          user.Roles,
-		IsActive:       user.IsActive,
-		OrganizationId: user.OrganizationId,
-	}
-
-	err = us.userRepository.Update(ctx, userWithNewPassword)
+	err = us.userRepository.SavePassword(ctx, user.ID, newHashedPassword)
 	if err != nil {
 		return err
 	}
@@ -219,7 +211,12 @@ func (us *UserService) ResetPassword(ctx context.Context, resetPassRequest dtos.
 
 // Admin only
 func (us *UserService) UpdateUser(ctx context.Context, updateUserRequest dtos.UpdateUserRequest) error {
-	user, err := us.userRepository.FindById(ctx, updateUserRequest.Id)
+	claims, ok := authcontext.GetClaims(ctx)
+	if !ok || claims == nil {
+		return errs.ErrUnauthorized
+	}
+
+	user, err := us.userRepository.FindById(ctx, updateUserRequest.Id, repositories.UserScope{OrganizationID: &claims.OrganizationId})
 	if err != nil {
 		return err
 	}
@@ -264,7 +261,7 @@ func (us *UserService) UpdateUser(ctx context.Context, updateUserRequest dtos.Up
 		OrganizationId: updateOrganizationId,
 	}
 
-	err = us.userRepository.Update(ctx, userToUpdate)
+	err = us.userRepository.Update(ctx, userToUpdate, repositories.UserScope{OrganizationID: &claims.OrganizationId})
 	if err != nil {
 		return err
 	}
@@ -284,7 +281,7 @@ func (us *UserService) ListAllUsers(ctx context.Context) (dtos.GetAllUsersRespon
 		return nil, errs.ErrUnauthorized
 	}
 
-	users, err := us.userRepository.List(ctx)
+	users, err := us.userRepository.List(ctx, repositories.UserScope{OrganizationID: &claims.OrganizationId})
 	if err != nil {
 		return nil, err
 	}
@@ -315,7 +312,7 @@ func (us *UserService) RemoveUser(ctx context.Context, req dtos.RemoveUserReques
 		return errs.ErrUnauthorized
 	}
 
-	err := us.userRepository.Delete(ctx, req.Id)
+	err := us.userRepository.Delete(ctx, req.Id, repositories.UserScope{OrganizationID: &claims.OrganizationId})
 	if err != nil {
 		return err
 	}

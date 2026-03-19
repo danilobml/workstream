@@ -23,10 +23,11 @@ func NewUserPgRepository(db db.DBInterface) *UserPgRepository {
 	}
 }
 
-func (ur *UserPgRepository) List(ctx context.Context) ([]*models.User, error) {
+func (ur *UserPgRepository) List(ctx context.Context, scope UserScope) ([]*models.User, error) {
 	query := `SELECT id, email, is_active
-				FROM users`
-	rows, err := ur.db.Query(ctx, query)
+				FROM users
+				WHERE organization_id = $1`
+	rows, err := ur.db.Query(ctx, query, scope.OrganizationID)
 	if err != nil {
 		return nil, err
 	}
@@ -52,14 +53,14 @@ func (ur *UserPgRepository) List(ctx context.Context) ([]*models.User, error) {
 	return users, nil
 }
 
-func (ur *UserPgRepository) FindById(ctx context.Context, id uuid.UUID) (*models.User, error) {
+func (ur *UserPgRepository) FindById(ctx context.Context, id uuid.UUID, scope UserScope) (*models.User, error) {
 	var user models.User
 
 	err := ur.db.QueryRow(ctx, `
 		SELECT id, email, hashed_password, is_active, organization_id
 			FROM users
-			WHERE id = $1
-		`, id).Scan(
+			WHERE id = $1 AND organization_id = $2
+		`, id, scope.OrganizationID).Scan(
 		&user.ID,
 		&user.Email,
 		&user.HashedPassword,
@@ -121,7 +122,7 @@ func (ur *UserPgRepository) Create(ctx context.Context, user models.User) error 
 
 	_, err = tx.Exec(ctx, `
 		INSERT INTO users (id, email, hashed_password, is_active, organization_id)
-		VALUES ($1, $2, $3, $4)
+		VALUES ($1, $2, $3, $4, $5)
 	`, user.ID, user.Email, user.HashedPassword, true, user.OrganizationId)
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -144,7 +145,7 @@ func (ur *UserPgRepository) Create(ctx context.Context, user models.User) error 
 	return tx.Commit(ctx)
 }
 
-func (ur *UserPgRepository) Update(ctx context.Context, user models.User) error {
+func (ur *UserPgRepository) Update(ctx context.Context, user models.User, scope UserScope) error {
 	tx, err := ur.db.Begin(ctx)
 	if err != nil {
 		return err
@@ -154,8 +155,8 @@ func (ur *UserPgRepository) Update(ctx context.Context, user models.User) error 
 	_, err = tx.Exec(ctx, `
 		UPDATE users 
 		SET email = $1, hashed_password = $2, is_active = $3, organization_id = $4
-		WHERE id = $5
-	`, user.Email, user.HashedPassword, user.IsActive, user.OrganizationId, user.ID)
+		WHERE id = $5 AND organization_id = $6
+	`, user.Email, user.HashedPassword, user.IsActive, user.OrganizationId, user.ID, scope.OrganizationID)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
@@ -185,11 +186,30 @@ func (ur *UserPgRepository) Update(ctx context.Context, user models.User) error 
 	return tx.Commit(ctx)
 }
 
-func (ur *UserPgRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (ur *UserPgRepository) SavePassword(ctx context.Context, userId uuid.UUID, newPassword string) error {
+	tx, err := ur.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx, `
+		UPDATE users 
+		SET hashed_password = $1
+		WHERE id = $2
+	`, newPassword, userId)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
+func (ur *UserPgRepository) Delete(ctx context.Context, id uuid.UUID, scope UserScope) error {
 	ct, err := ur.db.Exec(ctx, `
 		DELETE FROM users
-		WHERE id = $1
-	`, id)
+		WHERE id = $1 AND organization_id = $2
+	`, id, scope.OrganizationID)
 	if err != nil {
 		return err
 	}
