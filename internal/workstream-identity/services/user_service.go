@@ -51,12 +51,18 @@ func (us *UserService) Register(ctx context.Context, registerReq dtos.RegisterRe
 		return dtos.RegisterResponse{}, err
 	}
 
+	parsedOrganizationId, err := uuid.Parse(registerReq.OrganizationId)
+	if err != nil {
+		return dtos.RegisterResponse{}, err
+	}
+
 	user := models.User{
 		ID:             id,
 		HashedPassword: hashedPassword,
 		Email:          registerReq.Email,
 		Roles:          parsedRoles,
 		IsActive:       true,
+		OrganizationId: parsedOrganizationId,
 	}
 	err = us.userRepository.Create(ctx, user)
 	if err != nil {

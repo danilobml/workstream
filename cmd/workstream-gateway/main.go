@@ -57,19 +57,19 @@ func main() {
 	}
 	defer identityConn.Close()
 
+	jwtManager := jwt.NewJwtManager([]byte(secretJwtKey))
+	authMiddleware := middleware.Authenticate(jwtManager)
+
 	tasksService := services.NewTasksServiceClient(tasksConn)
 	tasksHandler := handlers.NewTasksHandler(tasksService)
-	tasksRouter := routes.RegisterTaskRoutes(tasksHandler)
+	tasksRouter := routes.RegisterTaskRoutes(tasksHandler, authMiddleware)
 
-	jwtManager := jwt.NewJwtManager([]byte(secretJwtKey))
-
-	authMiddleware := middleware.Authenticate(jwtManager)
 	identityService := services.NewIdentityServiceClient(identityConn)
 	identityHandler := handlers.NewIdentityHandler(identityService, identityApiKey)
 	identityRouter := routes.RegisterIdentityRoutes(identityHandler, authMiddleware)
 
 	root := http.NewServeMux()
-	root.Handle("/tasks/", http.StripPrefix("/tasks", tasksRouter))
+	root.Handle("/", tasksRouter)
 	root.Handle("/identity/", http.StripPrefix("/identity", identityRouter))
 
 	// Swagger openapi

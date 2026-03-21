@@ -16,6 +16,8 @@ paths:
       operationId: getTasks
       summary: List existing tasks
       tags: [Tasks]
+      security:
+        - BearerAuth: []
       responses:
         "200":
           description: A list of tasks
@@ -37,10 +39,17 @@ paths:
                   - id: "a7c4c2c4-6c4d-4b1b-8f34-3b9a4a6c2b77"
                     title: "Call the dentist"
                     completed: true
+        "401":
+          description: Missing or invalid JWT
+        "403":
+          description: Authenticated but not authorized
+
     post:
       operationId: createTask
       summary: Creates a task
       tags: [Tasks]
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -77,12 +86,18 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: "title is required"
+        "401":
+          description: Missing or invalid JWT
+        "403":
+          description: Authenticated but not authorized
 
   /tasks/{id}:
     get:
       operationId: getTask
       summary: Returns an existing task
       tags: [Tasks]
+      security:
+        - BearerAuth: []
       parameters:
         - name: id
           in: path
@@ -106,6 +121,10 @@ paths:
                   id: "0b2f3e9a-7d1b-4b4c-9c2b-7b9e8ef1e1a1"
                   title: "Buy milk"
                   completed: false
+        "401":
+          description: Missing or invalid JWT
+        "403":
+          description: Authenticated but not authorized
         "404":
           description: Task not found
           content:
@@ -120,6 +139,8 @@ paths:
       operationId: completeTask
       summary: Completes a task
       tags: [Tasks]
+      security:
+        - BearerAuth: []
       parameters:
         - name: id
           in: path
@@ -130,6 +151,10 @@ paths:
       responses:
         "200":
           description: Task successfully completed
+        "401":
+          description: Missing or invalid JWT
+        "403":
+          description: Authenticated but not authorized
         "404":
           description: Task not found
           content:
@@ -232,11 +257,11 @@ paths:
       summary: Unregister user
       tags: [Identity, Identity/Admin]
       description: |
-            Unregisters a user.
+        Unregisters a user.
 
-            Authorization rules:
-            - The authenticated user may unregister their own account.
-            - An authenticated user with the `admin` role may unregister any user.
+        Authorization rules:
+        - The authenticated user may unregister their own account.
+        - An authenticated user with the `admin` role may unregister any user.
       parameters:
         - name: id
           in: path
@@ -254,60 +279,59 @@ paths:
         "403":
           description: forbidden
 
-  identity/request-password:
-      post:
-        operationId: requestPassword
-        summary: Request user password reset
-        tags: [Identity]
-        requestBody:
-          required: true
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - email
-                properties:
-                  email:
-                    type: string
-                    format: email
+  /identity/request-password:
+    post:
+      operationId: requestPassword
+      summary: Request user password reset
+      tags: [Identity]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
               example:
                 email: test2@mail.com
-        responses:
-          "204":
-            description: password reset requested
+      responses:
+        "204":
+          description: password reset requested
 
-  identity/reset-password:
-      post:
-        operationId: resetPassword
-        summary: Reset user password
-        tags: [Identity]
-        requestBody:
-          required: true
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - reset_token
-                  - password
-                properties:
-                  reset_token:
-                    type: string
-                  password:
-                    type: string
-                    minLength: 6 
+  /identity/reset-password:
+    post:
+      operationId: resetPassword
+      summary: Reset user password
+      tags: [Identity]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reset_token
+                - password
+              properties:
+                reset_token:
+                  type: string
+                password:
+                  type: string
+                  minLength: 6
               example:
                 reset_token: eyJhbGciOi...
                 password: test-pass
-        responses:
-          "204":
-            description: password reset requested
+      responses:
+        "204":
+          description: password reset requested
 
   /identity/users:
     get:
-      tags:
-        [Identity/Admin]
+      tags: [Identity/Admin]
       summary: List users (admin only)
       operationId: listAllUsers
       security:
@@ -328,8 +352,7 @@ paths:
 
   /identity/users/{id}:
     get:
-      tags:
-        [Identity/Admin]
+      tags: [Identity/Admin]
       summary: Get user by ID (admin only)
       description: |
         Returns a user
@@ -358,8 +381,7 @@ paths:
           description: User not found
 
     put:
-      tags:
-        [Identity/Admin]
+      tags: [Identity/Admin]
       summary: Update user (admin only)
       description: |
         Updates a user
@@ -394,8 +416,7 @@ paths:
           description: Email already exists
 
     delete:
-      tags:
-        [Identity/Admin]
+      tags: [Identity/Admin]
       summary: Delete user (admin only)
       description: |
         Deletes a user
@@ -425,6 +446,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+
   schemas:
     Task:
       type: object
@@ -437,10 +459,10 @@ components:
           type: string
         completed:
           type: boolean
+
     User:
       type: object
-      required:
-        [id, email, roles, isActive, organizationId]
+      required: [id, email, roles, isActive, organizationId]
       properties:
         id:
           type: string
@@ -455,8 +477,7 @@ components:
           description: Roles assigned to the user within the organization.
           items:
             type: string
-            enum:
-              [admin, user]
+            enum: [admin, user]
         isActive:
           type: boolean
           example: true
@@ -470,3 +491,23 @@ components:
       properties:
         error:
           type: string
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [admin, user]
+        organizationId:
+          type: string
+          format: uuid
+        isActive:
+          type: boolean

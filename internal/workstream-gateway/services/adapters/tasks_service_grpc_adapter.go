@@ -6,6 +6,7 @@ import (
 	pb "github.com/danilobml/workstream/internal/gen/tasks/v1"
 	"github.com/danilobml/workstream/internal/platform/grpcutils"
 	"github.com/danilobml/workstream/internal/platform/models"
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
 )
 
@@ -23,11 +24,16 @@ func (c *TasksServiceClient) CreateTask(ctx context.Context, title string) (*mod
 		return nil, grpcutils.ParseGrpcError(err)
 	}
 
-	t := resp.GetTask()
+	task := resp.GetTask()
+	organizationIdParsed, err := uuid.Parse(task.GetOrganizationId())
+	if err != nil {
+		return nil, grpcutils.ParseGrpcError(err)
+	}
 	return &models.Task{
-		Id:        t.GetTaskId(),
-		Title:     t.GetTitle(),
-		Completed: t.GetCompleted(),
+		Id:             task.GetTaskId(),
+		Title:          task.GetTitle(),
+		Completed:      task.GetCompleted(),
+		OrganizationId: organizationIdParsed,
 	}, nil
 }
 
@@ -37,11 +43,18 @@ func (c *TasksServiceClient) GetTask(ctx context.Context, id string) (*models.Ta
 		return nil, grpcutils.ParseGrpcError(err)
 	}
 
-	t := resp.GetTask()
+	task := resp.GetTask()
+
+	organizationIdParsed, err := uuid.Parse(task.GetOrganizationId())
+	if err != nil {
+		return nil, grpcutils.ParseGrpcError(err)
+	}
+
 	return &models.Task{
-		Id:        t.GetTaskId(),
-		Title:     t.GetTitle(),
-		Completed: t.GetCompleted(),
+		Id:             task.GetTaskId(),
+		Title:          task.GetTitle(),
+		Completed:      task.GetCompleted(),
+		OrganizationId: organizationIdParsed,
 	}, nil
 }
 
@@ -54,10 +67,15 @@ func (c *TasksServiceClient) ListTasks(ctx context.Context) ([]*models.Task, err
 	var tasks []*models.Task
 
 	for _, task := range resp.GetTasks() {
+		organizationIdParsed, err := uuid.Parse(task.GetOrganizationId())
+		if err != nil {
+			return nil, grpcutils.ParseGrpcError(err)
+		}
 		tasks = append(tasks, &models.Task{
-			Id: task.GetTaskId(),
-			Title: task.GetTitle(),
-			Completed: task.GetCompleted(),
+			Id:             task.GetTaskId(),
+			Title:          task.GetTitle(),
+			Completed:      task.GetCompleted(),
+			OrganizationId: organizationIdParsed,
 		})
 	}
 

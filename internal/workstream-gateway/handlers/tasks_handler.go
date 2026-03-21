@@ -1,25 +1,15 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
-	"time"
 
 	"github.com/danilobml/workstream/internal/platform/errs"
-	"github.com/danilobml/workstream/internal/platform/httputils"
 	"github.com/danilobml/workstream/internal/workstream-gateway/dtos"
+	"github.com/danilobml/workstream/internal/workstream-gateway/httputils"
 	services "github.com/danilobml/workstream/internal/workstream-gateway/services/ports"
 )
-
-type ITasksHandler interface {
-	CreateNewTask(w http.ResponseWriter, r *http.Request)
-	GetTask(w http.ResponseWriter, r *http.Request)
-	GetTasks(w http.ResponseWriter, r *http.Request)
-	CompleteTask(w http.ResponseWriter, r *http.Request)
-}
 
 type TasksHandler struct {
 	tasksService services.TasksServicePort
@@ -32,14 +22,17 @@ func NewTasksHandler(tasksService services.TasksServicePort) *TasksHandler {
 }
 
 func (gh *TasksHandler) CreateNewTask(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
+	auth := r.Header.Get("Authorization")
+	ctx := httputils.CtxWithAuth(r.Context(), auth)
 
 	request := &dtos.CreateTaskRequest{}
-
 	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		http.Error(w, "failed to parse request", http.StatusBadRequest)
+		return
+	}
+
+	if !isInputValid(w, request) {
 		return
 	}
 
@@ -50,20 +43,18 @@ func (gh *TasksHandler) CreateNewTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := dtos.SingleTaskResponse{
-		Id:        tsResp.Id,
-		Title:     tsResp.Title,
-		Completed: tsResp.Completed,
+		Id:             tsResp.Id,
+		Title:          tsResp.Title,
+		Completed:      tsResp.Completed,
+		OrganizationId: tsResp.OrganizationId.String(),
 	}
 
-	err = httputils.WriteJson(w, http.StatusCreated, resp)
-	if err != nil {
-		log.Println(err)
-	}
+	httputils.WriteJSONResponse(w, http.StatusCreated, resp)
 }
 
 func (gh *TasksHandler) GetTask(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
+	auth := r.Header.Get("Authorization")
+	ctx := httputils.CtxWithAuth(r.Context(), auth)
 
 	id := r.PathValue("id")
 	if id == "" {
@@ -82,20 +73,18 @@ func (gh *TasksHandler) GetTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := &dtos.SingleTaskResponse{
-		Id:        task.Id,
-		Title:     task.Title,
-		Completed: task.Completed,
+		Id:             task.Id,
+		Title:          task.Title,
+		Completed:      task.Completed,
+		OrganizationId: task.OrganizationId.String(),
 	}
 
-	err = httputils.WriteJson(w, http.StatusOK, resp)
-	if err != nil {
-		log.Println(err)
-	}
+	httputils.WriteJSONResponse(w, http.StatusOK, resp)
 }
 
 func (gh *TasksHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
+	auth := r.Header.Get("Authorization")
+	ctx := httputils.CtxWithAuth(r.Context(), auth)
 
 	tasks, err := gh.tasksService.ListTasks(ctx)
 	if err != nil {
@@ -107,21 +96,18 @@ func (gh *TasksHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 
 	for _, task := range tasks {
 		resp = append(resp, dtos.SingleTaskResponse{
-			Id:        task.Id,
-			Title:     task.Title,
-			Completed: task.Completed,
+			Id:             task.Id,
+			Title:          task.Title,
+			Completed:      task.Completed,
+			OrganizationId: task.OrganizationId.String(),
 		})
 	}
-
-	err = httputils.WriteJson(w, http.StatusOK, resp)
-	if err != nil {
-		log.Println(err)
-	}
+	httputils.WriteJSONResponse(w, http.StatusOK, resp)
 }
 
 func (gh *TasksHandler) CompleteTask(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
+	auth := r.Header.Get("Authorization")
+	ctx := httputils.CtxWithAuth(r.Context(), auth)
 
 	id := r.PathValue("id")
 	if id == "" {
@@ -139,8 +125,5 @@ func (gh *TasksHandler) CompleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = httputils.WriteJson(w, http.StatusOK, "Task successfully completed")
-	if err != nil {
-		log.Println(err)
-	}
+	httputils.WriteJSONResponse(w, http.StatusOK, "Task successfully completed")
 }

@@ -16,12 +16,14 @@ service TasksService {
 message Task {
     string task_id = 1;
     string title = 2;
-    bool completed = 3; 
+    bool completed = 3;
+    string organization_id = 4;
 }
 
 message CreateTaskRequest {
     string title = 1;
 }
+
 message CreateTaskResponse {
     Task task = 1;
 }
@@ -30,10 +32,11 @@ message GetTaskRequest {
     string task_id = 1;
 }
 message GetTaskResponse {
-    Task task =1;
+    Task task = 1;
 }
 
 message ListTasksRequest {}
+
 message ListTasksResponse {
     repeated Task tasks = 1;
 }
@@ -41,4 +44,5 @@ message ListTasksResponse {
 message CompleteTaskRequest {
     string task_id = 1;
 }
+
 message CompleteTaskResponse {}

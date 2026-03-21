@@ -1,12 +1,20 @@
-package helpers
+package httputils
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
 
 	"github.com/danilobml/workstream/internal/platform/errs"
+	"google.golang.org/grpc/metadata"
 )
+
+// Forwards auth - authorization should be: "Bearer <token>"
+func CtxWithAuth(ctx context.Context, authorization string) context.Context {
+    md := metadata.Pairs("authorization", authorization)
+    return metadata.NewOutgoingContext(ctx, md)
+}
 
 type ErrorResponse struct {
 	Error string `json:"error"`
@@ -50,3 +58,5 @@ func WriteErrorsResponse(w http.ResponseWriter, err error) {
 		return
 	}
 }
+
+

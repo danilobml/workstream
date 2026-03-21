@@ -7,8 +7,12 @@ import (
 	"time"
 
 	pb "github.com/danilobml/workstream/internal/gen/tasks/v1"
+	authcontext "github.com/danilobml/workstream/internal/platform/auth_context"
 	"github.com/danilobml/workstream/internal/platform/errs"
+	"github.com/danilobml/workstream/internal/platform/grpcutils"
+	"github.com/danilobml/workstream/internal/platform/jwt"
 	"github.com/danilobml/workstream/internal/platform/models"
+	"github.com/danilobml/workstream/internal/workstream-tasks/middleware"
 	"github.com/danilobml/workstream/internal/workstream-tasks/repositories"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
@@ -17,24 +21,37 @@ import (
 
 type TasksService struct {
 	pb.UnimplementedTasksServiceServer
-	repo          repositories.ITaskRepository
+	repo          repositories.TaskRepository
 	eventsService EventsService
+	jwtManager    *jwt.JwtManager
 }
 
-func NewTasksService(repo repositories.ITaskRepository, eventsService EventsService) *TasksService {
+func NewTasksService(repo repositories.TaskRepository, eventsService EventsService, jwtManager *jwt.JwtManager) *TasksService {
 	return &TasksService{
 		repo:          repo,
 		eventsService: eventsService,
+		jwtManager:    jwtManager,
 	}
 }
 
 type TaskCreatedV1Payload struct {
-	TaskId    string `json:"task_id"`
-	Title     string `json:"title"`
-	Completed bool   `json:"completed"`
+	TaskId         string    `json:"task_id"`
+	Title          string    `json:"title"`
+	Completed      bool      `json:"completed"`
+	OrganizationId uuid.UUID `json:"organization_id"`
 }
 
 func (ts *TasksService) CreateTask(ctx context.Context, r *pb.CreateTaskRequest) (*pb.CreateTaskResponse, error) {
+	ctx, err := middleware.AuthenticateGRPC(ctx, ts.jwtManager)
+	if err != nil {
+		return nil, grpcutils.ParseCustomError(err)
+	}
+
+	claims, ok := authcontext.GetClaims(ctx)
+	if !ok {
+		return nil, grpcutils.ParseCustomError(errs.ErrUnauthorized)
+	}
+
 	if r.GetTitle() == "" {
 		return nil, status.Error(codes.InvalidArgument, "required parameter Title is missing")
 	}
@@ -42,9 +59,10 @@ func (ts *TasksService) CreateTask(ctx context.Context, r *pb.CreateTaskRequest)
 	id := uuid.New().String()
 
 	task := models.Task{
-		Id:        id,
-		Title:     r.GetTitle(),
-		Completed: false,
+		Id:             id,
+		Title:          r.GetTitle(),
+		Completed:      false,
+		OrganizationId: claims.OrganizationId,
 	}
 
 	taskDb, err := ts.repo.Create(ctx, task)
@@ -53,9 +71,10 @@ func (ts *TasksService) CreateTask(ctx context.Context, r *pb.CreateTaskRequest)
 	}
 
 	newTask := &TaskCreatedV1Payload{
-		TaskId:    taskDb.Id,
-		Title:     taskDb.Title,
-		Completed: taskDb.Completed,
+		TaskId:         taskDb.Id,
+		Title:          taskDb.Title,
+		Completed:      taskDb.Completed,
+		OrganizationId: taskDb.OrganizationId,
 	}
 
 	taskJson, err := json.Marshal(newTask)
@@ -79,19 +98,30 @@ func (ts *TasksService) CreateTask(ctx context.Context, r *pb.CreateTaskRequest)
 
 	return &pb.CreateTaskResponse{
 		Task: &pb.Task{
-			TaskId: taskDb.Id,
-			Title: taskDb.Title,
-			Completed: taskDb.Completed,
+			TaskId:         taskDb.Id,
+			Title:          taskDb.Title,
+			Completed:      taskDb.Completed,
+			OrganizationId: taskDb.OrganizationId.String(),
 		},
 	}, nil
 }
 
 func (ts *TasksService) GetTask(ctx context.Context, r *pb.GetTaskRequest) (*pb.GetTaskResponse, error) {
+	ctx, err := middleware.AuthenticateGRPC(ctx, ts.jwtManager)
+	if err != nil {
+		return nil, grpcutils.ParseCustomError(err)
+	}
+
+	claims, ok := authcontext.GetClaims(ctx)
+	if !ok {
+		return nil, grpcutils.ParseCustomError(errs.ErrUnauthorized)
+	}
+
 	if r.GetTaskId() == "" {
 		return nil, status.Error(codes.InvalidArgument, "required parameter TaskId is missing")
 	}
 
-	taskDb, err := ts.repo.GetById(ctx, r.GetTaskId())
+	taskDb, err := ts.repo.GetById(ctx, r.GetTaskId(), repositories.TaskScope{OrganizationId: claims.OrganizationId})
 	if err != nil {
 		if errors.Is(err, errs.ErrNotFound) {
 			return nil, status.Error(codes.NotFound, "task not found")
@@ -99,10 +129,15 @@ func (ts *TasksService) GetTask(ctx context.Context, r *pb.GetTaskRequest) (*pb.
 		return nil, status.Error(codes.Internal, "failed to get task")
 	}
 
+	if !taskBelongsToOrganization(ctx, taskDb.OrganizationId) {
+		return nil, status.Error(codes.PermissionDenied, "task does not belong to user organization")
+	}
+
 	foundTask := &pb.Task{
-		TaskId:    taskDb.Id,
-		Title:     taskDb.Title,
-		Completed: taskDb.Completed,
+		TaskId:         taskDb.Id,
+		Title:          taskDb.Title,
+		Completed:      taskDb.Completed,
+		OrganizationId: taskDb.OrganizationId.String(),
 	}
 
 	return &pb.GetTaskResponse{
@@ -111,7 +146,17 @@ func (ts *TasksService) GetTask(ctx context.Context, r *pb.GetTaskRequest) (*pb.
 }
 
 func (ts *TasksService) ListTasks(ctx context.Context, r *pb.ListTasksRequest) (*pb.ListTasksResponse, error) {
-	dbTasks, err := ts.repo.List(ctx)
+	ctx, err := middleware.AuthenticateGRPC(ctx, ts.jwtManager)
+	if err != nil {
+		return nil, grpcutils.ParseCustomError(err)
+	}
+
+	claims, ok := authcontext.GetClaims(ctx)
+	if !ok {
+		return nil, grpcutils.ParseCustomError(errs.ErrUnauthorized)
+	}
+
+	dbTasks, err := ts.repo.List(ctx, repositories.TaskScope{OrganizationId: claims.OrganizationId})
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to get task list")
 	}
@@ -119,9 +164,10 @@ func (ts *TasksService) ListTasks(ctx context.Context, r *pb.ListTasksRequest) (
 	var tasks []*pb.Task
 	for _, task := range dbTasks {
 		rTask := &pb.Task{
-			TaskId:    task.Id,
-			Title:     task.Title,
-			Completed: task.Completed,
+			TaskId:         task.Id,
+			Title:          task.Title,
+			Completed:      task.Completed,
+			OrganizationId: task.OrganizationId.String(),
 		}
 		tasks = append(tasks, rTask)
 	}
@@ -134,11 +180,21 @@ func (ts *TasksService) ListTasks(ctx context.Context, r *pb.ListTasksRequest) (
 }
 
 func (ts *TasksService) CompleteTask(ctx context.Context, r *pb.CompleteTaskRequest) (*pb.CompleteTaskResponse, error) {
+	ctx, err := middleware.AuthenticateGRPC(ctx, ts.jwtManager)
+	if err != nil {
+		return nil, grpcutils.ParseCustomError(err)
+	}
+
+	claims, ok := authcontext.GetClaims(ctx)
+	if !ok {
+		return nil, grpcutils.ParseCustomError(errs.ErrUnauthorized)
+	}
+
 	if r.GetTaskId() == "" {
 		return nil, status.Error(codes.InvalidArgument, "required parameter TaskId is missing")
 	}
 
-	taskToUpdate, err := ts.repo.GetById(ctx, r.GetTaskId())
+	taskToUpdate, err := ts.repo.GetById(ctx, r.GetTaskId(), repositories.TaskScope{OrganizationId: claims.OrganizationId})
 	if err != nil {
 		if errors.Is(err, errs.ErrNotFound) {
 			return nil, status.Error(codes.NotFound, "task not found")
@@ -146,11 +202,25 @@ func (ts *TasksService) CompleteTask(ctx context.Context, r *pb.CompleteTaskRequ
 		return nil, status.Error(codes.Internal, "failed to get task")
 	}
 
+	if !taskBelongsToOrganization(ctx, taskToUpdate.OrganizationId) {
+		return nil, status.Error(codes.PermissionDenied, "task does not belong to user organization")
+	}
+
 	taskToUpdate.Completed = true
-	_, err = ts.repo.Update(ctx, *taskToUpdate)
+	_, err = ts.repo.Update(ctx, *taskToUpdate, repositories.TaskScope{OrganizationId: claims.OrganizationId})
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to update")
 	}
 
 	return &pb.CompleteTaskResponse{}, nil
+}
+
+// Auth Helper
+func taskBelongsToOrganization(ctx context.Context, taskOrganizationId uuid.UUID) bool {
+	claims, ok := authcontext.GetClaims(ctx)
+	if !ok {
+		return false
+	}
+
+	return claims.OrganizationId == taskOrganizationId
 }

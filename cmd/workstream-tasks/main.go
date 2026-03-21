@@ -6,6 +6,7 @@ import (
 	"os"
 
 	http "github.com/danilobml/workstream/internal/platform/httpserver"
+	"github.com/danilobml/workstream/internal/platform/jwt"
 	"github.com/danilobml/workstream/internal/platform/rabbitmq"
 	"github.com/danilobml/workstream/internal/workstream-tasks/db"
 	"github.com/danilobml/workstream/internal/workstream-tasks/grpc"
@@ -15,11 +16,12 @@ import (
 )
 
 const (
-	serviceName     = "workstream-tasks"
-	httpPortName    = "TASKS_HTTP_PORT"
-	grpcPortName    = "TASKS_GRPC_PORT"
-	postgresDsnName = "POSTGRES_DSN"
-	rabbitmqUrlName = "RABBITMQ_URL"
+	serviceName      = "workstream-tasks"
+	httpPortName     = "TASKS_HTTP_PORT"
+	grpcPortName     = "TASKS_GRPC_PORT"
+	postgresDsnName  = "POSTGRES_DSN"
+	rabbitmqUrlName  = "RABBITMQ_URL"
+	secretJwtKeyName = "SECRET_JWT_KEY"
 )
 
 func main() {
@@ -41,6 +43,11 @@ func main() {
 		log.Fatal("unable to read RABBITMQ_URL from env")
 	}
 
+	secretJwtKey := os.Getenv(secretJwtKeyName)
+	if secretJwtKey == "" {
+		log.Fatal("unable to read SECRET_JWT_KEY from env")
+	}
+
 	listener, err := grpc.StartGrpcListener(grpcPort)
 	if err != nil {
 		log.Fatal(err)
@@ -60,7 +67,10 @@ func main() {
 
 	repo := repositories.NewPgTaskRepository(dbConnPool)
 	rabbitService := services.NewRabbitProducerService(rabbitClient)
-	tasksServer := services.NewTasksService(repo, rabbitService)
+
+	jwtManager := jwt.NewJwtManager([]byte(secretJwtKey))
+
+	tasksServer := services.NewTasksService(repo, rabbitService, jwtManager)
 
 	errCh := make(chan error, 1)
 	go grpc.RegisterGrpcServer(tasksServer, listener, errCh)

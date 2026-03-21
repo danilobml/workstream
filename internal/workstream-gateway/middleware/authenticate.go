@@ -7,7 +7,7 @@ import (
 
 	authcontext "github.com/danilobml/workstream/internal/platform/auth_context"
 	"github.com/danilobml/workstream/internal/platform/jwt"
-	"github.com/danilobml/workstream/internal/workstream-identity/helpers"
+	"github.com/danilobml/workstream/internal/workstream-gateway/httputils"
 )
 
 type ctxKey string
@@ -20,14 +20,14 @@ func Authenticate(jwtManager *jwt.JwtManager) Middleware {
 			authHeader := r.Header.Get("Authorization")
 			parts := strings.Fields(authHeader)
 			if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
-				helpers.WriteJSONError(w, http.StatusUnauthorized, "unauthorized")
+				httputils.WriteJSONError(w, http.StatusUnauthorized, "unauthorized")
 				return
 			}
 			tokenString := parts[1]
 
 			claims, err := jwtManager.ParseAndValidateToken(tokenString)
 			if err != nil {
-				helpers.WriteJSONError(w, http.StatusUnauthorized, "unauthorized")
+				httputils.WriteJSONError(w, http.StatusUnauthorized, "unauthorized")
 				return
 			}
 
