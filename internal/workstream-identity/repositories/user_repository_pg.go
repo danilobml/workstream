@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgconn"
@@ -24,7 +25,7 @@ func NewUserPgRepository(db db.DBInterface) *UserPgRepository {
 }
 
 func (ur *UserPgRepository) List(ctx context.Context, scope UserScope) ([]*models.User, error) {
-	query := `SELECT id, email, is_active
+	query := `SELECT id, email, is_active, organization_id
 				FROM users
 				WHERE organization_id = $1`
 	rows, err := ur.db.Query(ctx, query, scope.OrganizationID)
@@ -36,8 +37,9 @@ func (ur *UserPgRepository) List(ctx context.Context, scope UserScope) ([]*model
 	var users []*models.User
 	for rows.Next() {
 		user := new(models.User)
-		err := rows.Scan(&user.ID, &user.Email, &user.IsActive)
+		err := rows.Scan(&user.ID, &user.Email, &user.IsActive, &user.OrganizationId)
 		if err != nil {
+			log.Println("list users repo err", err)
 			return nil, err
 		}
 
